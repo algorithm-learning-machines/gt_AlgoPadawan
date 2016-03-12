@@ -1,0 +1,4 @@
+--------------------------------------------------------------------------------
+-- File containing Training definitions, for example Criterions,
+-- Custom optimizing procedures
+--------------------------------------------------------------------------------
