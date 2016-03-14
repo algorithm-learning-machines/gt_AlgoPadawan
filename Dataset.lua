@@ -19,7 +19,8 @@ function Dataset:getNextBatch(batchSize)
         self.trainSet[1]:size(3)), torch.Tensor(batchSize,
         self.trainSet[2]:size(2), self.trainSet[2]:size(3))}
 
-    for i=self.batchIndex,math.min(self.batchIndex + batchSize - 1, self.trainSize) do
+    for i=self.batchIndex,math.min(self.batchIndex + batchSize - 1,
+        self.trainSize) do
         batch[1][i - self.batchIndex + 1] = self.trainSet[1][i]
         batch[2][i - self.batchIndex + 1] = self.trainSet[2][i]
     end
@@ -50,34 +51,54 @@ function Dataset.create(opt)
     self.minVal = tonumber(opt.minVal)
     self.maxVal = tonumber(opt.maxVal)
     self.batchIndex = 1 -- initial index
-
+    
+    local trainSet = {}
+    local testSet = {}
     if opt.datasetType == "binary_addition" then
+        local trainNumbers = {}
+         trainSet, trainNumbers = Dataset.__genBinaryOpSet(
+            self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},
+            function(a,b) return a + b end)
+         testSet, _ = Dataset.__genBinaryOpSet(self.testSize,
+            self.vectorSize, self.minVal, self.maxVal, trainNumbers,
+            function(a,b) return a + b end)
 
-        local trainSet, trainNumbers = Dataset.__genBinaryAdditionSet(self.trainSize,
-            self.vectorSize, self.minVal, self.maxVal, {})
-        local testSet, _ = Dataset.__genBinaryAdditionSet(self.testSize,
+    elseif opt.datasetType == "binary_cmmdc" then
+        local trainNumbers = {}
+        trainSet, trainNumbers = Dataset.__genBinaryOpSet(
+            self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},
+            cmmdc)
+        testSet, _ = Dataset.__genBinaryOpSet(self.testSize,
+            self.vectorSize, self.minVal, self.maxVal, trainNumbers,
+            cmmdc)
+
+    elseif opt.datasetType == "addition" then
+        local trainNumbers = {}
+        trainSet, trainNumbers = Dataset.__genAdditionSet(
+            self.trainSize, self.vectorSize, self.minVal, self.maxVal, {})
+        testSet, _ = Dataset.__genAdditionSet(self. testSize,
             self.vectorSize, self.minVal, self.maxVal, trainNumbers)
-
-        self.trainSet = trainSet
-        self.testSet = testSet
-
     else
         print("Dataset type " .. opt.dataset_type .. "Not implemented yet!")
         os.exit()
     end
+
+    self.trainSet = trainSet
+    self.testSet = testSet
 
     return self
 end
 
 
 --------------------------------------------------------------------------------
--- generate a binary addition set
+-- generate a binary operation set
 -- setSize -> size of set
 -- range -> minimum and maximum values
 -- vectorSize -> size of the binary vector; should be log2(maxNum)
+-- f -> function that gets executed on input
 --------------------------------------------------------------------------------
-function Dataset.__genBinaryAdditionSet(setSize, vectorSize, minVal,
-    maxVal, exclusionSet)
+function Dataset.__genBinaryOpSet(setSize, vectorSize, minVal,
+    maxVal, exclusionSet, f)
     local input = torch.Tensor(setSize,  2, vectorSize)
     local target = torch.Tensor(setSize, 1, vectorSize)
     local inputOriginal = {}
@@ -90,7 +111,7 @@ function Dataset.__genBinaryAdditionSet(setSize, vectorSize, minVal,
             b = math.random(minVal, maxVal)
         end
         inputOriginal[tostring(a).."_"..tostring(b)] = {a, b}
-        local c = a + b
+        local c = f(a,b)
         local aVec =Dataset.__numToBits(a, vectorSize)
         local bVec =Dataset.__numToBits(b, vectorSize)
         local cVec =Dataset.__numToBits(c, vectorSize)
@@ -101,6 +122,50 @@ function Dataset.__genBinaryAdditionSet(setSize, vectorSize, minVal,
     end
     return {input, target}, inputOriginal
 end
+
+
+--------------------------------------------------------------------------------
+--Greatest common divisor of a and b
+--------------------------------------------------------------------------------
+function cmmdc(a, b)
+    while b ~= 0 do
+        r = a % b
+        a = b
+        b = r
+    end
+    return a
+end
+
+
+--------------------------------------------------------------------------------
+-- generate an addition set
+-- setSize -> size of set
+-- range -> minimum and maximum values
+-- vectorSize -> size of the vector -> initially thought to be 1
+--------------------------------------------------------------------------------
+function Dataset.__genAdditionSet(setSize, vectorSize, minVal,
+    maxVal, exclusionSet)
+    local input = torch.Tensor(setSize,  2, vectorSize)
+    local target = torch.Tensor(setSize, 1, vectorSize)
+    local inputOriginal = {}
+    for i=1,setSize do
+        local a = torch.random(torch.Tensor(vectorSize), minVal, maxVal)
+        local b = torch.random(torch.Tensor(vectorSize), minVal, maxVal)
+        while (inputOriginal[tostring(a).."_"..tostring(b)] ~= nil) or
+            (exclusionSet[tostring(a).."_"..tostring(b)] ~= nil) do
+            a = torch.random(torch.Tensor(vectorSize), minVal, maxVal)
+            b = torch.random(torch.Tensor(vectorSize), minVal, maxVal)
+        end
+        inputOriginal[tostring(a).."_"..tostring(b)] = {a, b}
+        local c = a + b
+        local entry = torch.cat(a,b,2)
+        entry = entry:t()
+        input[i] = entry
+        target[i] = c
+    end
+    return {input, target}, inputOriginal
+end
+
 
 
 --------------------------------------------------------------------------------
