@@ -13,6 +13,7 @@ require 'rnn'
 require 'optim'
 require 'ModelUnitTests'
 require 'DataUnitTests'
+require 'TrainingUnitTests'
 
 
 --------------------------------------------------------------------------------
@@ -20,7 +21,7 @@ require 'DataUnitTests'
 --------------------------------------------------------------------------------
 Dataset = require("Dataset")
 Model = require("Model")
-
+require "Training"
 
 --------------------------------------------------------------------------------
 -- Command line options
@@ -38,7 +39,6 @@ cmd:text()
 
 local opt = cmd:parse(arg)
 
-
 --------------------------------------------------------------------------------
 -- Run unit Tests
 --------------------------------------------------------------------------------
@@ -48,8 +48,12 @@ function runUnitTestSuite(testSuite)
     end
 end
 
+print("Running model tests...")
 runUnitTestSuite(modelTests)
+print("Running data tests...")
 runUnitTestSuite(dataTests)
+print("Running training tests...")
+runUnitTestSuite(trainingTests)
 
 
 
