@@ -15,16 +15,17 @@ An implementation of an architecture capable of learning algorithms
 Main entry point of application
 ###Dataset.lua###
 Dataset specific classes and functions
+###DataUnitTests.lua###
+Unit tests referring to dataset definitions
 ###GenerateDataset.lua###
 Generates a specific dataset according to given params
 ###Model.lua###
 Model definition
 ###ModelUnitTests.lua###
 Unit tests referring to model definitions
-###DataUnitTests.lua###
-Unit tests referring to dataset definitions
 ###Training.lua###
-Contains training  classes and functions, such as custom Criterions
-
+Contains training classes and functions, such as custom Criterions
+###TrainingUnitTests.lua###
+Unit tests referring to training definitions
 
 
