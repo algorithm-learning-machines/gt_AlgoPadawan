@@ -4,16 +4,33 @@
 --------------------------------------------------------------------------------
 
 
+
 --------------------------------------------------------------------------------
 -- Dummy Criterion for prototyping
--- Starting to look like real criterion
 --------------------------------------------------------------------------------
 local DummyCriterion, _ = torch.class('nn.DummyCriterion',  'nn.Criterion')
 
-----------------------------------------------------------------------------
--- Returns loss function
-----------------------------------------------------------------------------
 function DummyCriterion:forward(input, target)
+    return 0
+end
+
+function DummyCriterion:backward(input, target)
+    self.gradInput = torch.zeros(input:size())
+    return self.gradInput
+end
+
+
+
+--------------------------------------------------------------------------------
+-- Probability negative log likelihood
+-- Custom defined criterion
+--------------------------------------------------------------------------------
+local PNLLCriterion, _ = torch.class('nn.PNLLCriterion',  'nn.Criterion')
+
+--------------------------------------------------------------------------------
+-- Returns loss function
+--------------------------------------------------------------------------------
+function PNLLCriterion:forward(input, target)
     ----------------------------------------------------------------------------
     -- Extract info from parameters
     ----------------------------------------------------------------------------
@@ -25,7 +42,7 @@ end
 --------------------------------------------------------------------------------
 -- sum over k of tk * log(mk) + (1-tk) * log(1 - mk)
 --------------------------------------------------------------------------------
-function DummyCriterion:sumDifference(input, target)
+function PNLLCriterion:sumDifference(input, target)
     ----------------------------------------------------------------------------
     -- Extract info from parameters
     ----------------------------------------------------------------------------
@@ -43,7 +60,10 @@ function DummyCriterion:sumDifference(input, target)
 
 end
 
-function DummyCriterion:backward(input, target)
+--------------------------------------------------------------------------------
+-- Derivatives of relevant memory and probabiltiy
+--------------------------------------------------------------------------------
+function PNLLCriterion:backward(input, target)
     ----------------------------------------------------------------------------
     -- Extract info from parameters
     ----------------------------------------------------------------------------

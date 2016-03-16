@@ -45,7 +45,7 @@ trainingTests["sanityCheck"] = function()
    --getting past this point means basic layout of training procedure
     --makes sense
     --trainModel(model, nn.DummyCriterion(), dataset, opt, optim.sgd)
-    if pcall(trainModel, model,nn.DummyCriterion(),
+    if pcall(trainModel, model,nn.PNLLCriterion(),
             dataset, opt, optim.sgd) then
         return "...OK!"
     end
