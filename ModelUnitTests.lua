@@ -71,6 +71,7 @@ modelTests["sanityCheck"] = function()
     opt.vectorSize = dataset.trainSet[1]:size(3)
 
     m = Model.create(opt)
+    graph.dot(m.fg, 'Model', 'model')
     memory = torch.Tensor(tonumber(opt.memSize), opt.vectorSize):fill(0)
 
     local f = m:forward({memory, dataset:getNextBatch(1)[1][1][1]})

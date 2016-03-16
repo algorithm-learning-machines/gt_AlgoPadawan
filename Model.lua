@@ -40,6 +40,7 @@ function Model.create(opt)
     ----------------------------------------------------------------------------
     -- Value Extractor
     ----------------------------------------------------------------------------
+    --TODO for current problem may not need to send value here
     local addressTransp = nn.Reshape(1, memSize)(address)
     local value = nn.MM()({addressTransp, initialMem})
     ----------------------------------------------------------------------------
@@ -92,10 +93,11 @@ function Model.create(opt)
     local allInOne = nn.JoinTable(1)({addrValCalc, reshapedMem})
     local h1 = nn.Linear(vectorSize + memSize + memSize * vectorSize, 10)
         (allInOne)
-    local p = nn.Linear(10, 1)(nn.Tanh()(nn.Linear(10, 10)(nn.Tanh()(h1))))
+    local p = nn.Linear(10, 1)(nn.Sigmoid()(nn.Linear(10, 10)(nn.Sigmoid()(h1))))
     ----------------------------------------------------------------------------
 
     return nn.gModule({initialMem, input}, {finMem, p})
+
 end
 
 return Model
