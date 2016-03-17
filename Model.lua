@@ -3,7 +3,8 @@
 --------------------------------------------------------------------------------
 require "rnn"
 require "nngraph"
-
+--require "cutorch"
+--require "cunn"
 local Model = {}
 
 

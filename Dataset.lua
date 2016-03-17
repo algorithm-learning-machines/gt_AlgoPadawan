@@ -5,7 +5,6 @@
 local Dataset = {}
 Dataset.__index = Dataset
 
-
 --------------------------------------------------------------------------------
 -- Returns next batch
 -- modifies current batchIndex
@@ -15,8 +14,8 @@ function Dataset:getNextBatch(batchSize)
         return nil
     end
 
-    local batch = {torch.Tensor(batchSize, self.trainSet[1]:size(2),
-        self.trainSet[1]:size(3)), torch.Tensor(batchSize,
+    local batch = {Tensor(batchSize, self.trainSet[1]:size(2),
+        self.trainSet[1]:size(3)), Tensor(batchSize,
         self.trainSet[2]:size(2), self.trainSet[2]:size(3))}
 
     for i=self.batchIndex,math.min(self.batchIndex + batchSize - 1,
@@ -99,8 +98,8 @@ end
 --------------------------------------------------------------------------------
 function Dataset.__genBinaryOpSet(setSize, vectorSize, minVal,
     maxVal, exclusionSet, f)
-    local input = torch.Tensor(setSize,  2, vectorSize)
-    local target = torch.Tensor(setSize, 1, vectorSize)
+    local input = Tensor(setSize,  2, vectorSize)
+    local target = Tensor(setSize, 1, vectorSize)
     local inputOriginal = {}
     for i=1,setSize do
         local a = math.random(minVal, maxVal)
@@ -145,16 +144,16 @@ end
 --------------------------------------------------------------------------------
 function Dataset.__genAdditionSet(setSize, vectorSize, minVal,
     maxVal, exclusionSet)
-    local input = torch.Tensor(setSize,  2, vectorSize)
-    local target = torch.Tensor(setSize, 1, vectorSize)
+    local input = Tensor(setSize,  2, vectorSize)
+    local target = Tensor(setSize, 1, vectorSize)
     local inputOriginal = {}
     for i=1,setSize do
-        local a = torch.random(torch.Tensor(vectorSize), minVal, maxVal)
-        local b = torch.random(torch.Tensor(vectorSize), minVal, maxVal)
+        local a = torch.random(Tensor(vectorSize), minVal, maxVal)
+        local b = torch.random(Tensor(vectorSize), minVal, maxVal)
         while (inputOriginal[tostring(a).."_"..tostring(b)] ~= nil) or
             (exclusionSet[tostring(a).."_"..tostring(b)] ~= nil) do
-            a = torch.random(torch.Tensor(vectorSize), minVal, maxVal)
-            b = torch.random(torch.Tensor(vectorSize), minVal, maxVal)
+            a = torch.random(Tensor(vectorSize), minVal, maxVal)
+            b = torch.random(Tensor(vectorSize), minVal, maxVal)
         end
         inputOriginal[tostring(a).."_"..tostring(b)] = {a, b}
         local c = a + b
@@ -174,7 +173,7 @@ end
 -- bits -> number of bits that shall represent the number
 --------------------------------------------------------------------------------
 function Dataset.__numToBits(num, bits)
-    local bitVec = torch.Tensor(bits, 1):fill(0)
+    local bitVec = Tensor(bits, 1):fill(0)
     local i_bit = 1
     while num ~= 0 do
         local b = bit.band(num, 1)

@@ -10,7 +10,6 @@ require 'nn'
 require 'nngraph'
 require 'rnn'
 require 'optim'
-
 --------------------------------------------------------------------------------
 -- Internal modules
 --------------------------------------------------------------------------------
@@ -72,12 +71,14 @@ modelTests["sanityCheck"] = function()
 
     m = Model.create(opt)
     graph.dot(m.fg, 'Model', 'model')
-    memory = torch.Tensor(tonumber(opt.memSize), opt.vectorSize):fill(0)
-
+    memory = Tensor(tonumber(opt.memSize), opt.vectorSize):fill(0)
+    print(dataset:getNextBatch(1)[1][1][1])
+    print(memory)
+    print(m:forward({memory, dataset:getNextBatch(1)[1][1][1]}))
     local f = m:forward({memory, dataset:getNextBatch(1)[1][1][1]})
 
     --check sizes of forward pass to see if they're what we expect
-    if f[1]:isSameSizeAs(memory) and f[2]:isSameSizeAs(torch.Tensor(1))
+    if f[1]:isSameSizeAs(memory) and f[2]:isSameSizeAs(Tensor(1))
     then
         return "...OK!"
     else

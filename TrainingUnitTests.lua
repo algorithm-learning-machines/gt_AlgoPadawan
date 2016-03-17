@@ -30,6 +30,7 @@ trainingTests["sanityCheck"] = function()
     cmd:option('-testFile', 'test.t7', 'filename of the test set')
     cmd:option('-batchSize', '16', 'number of sequences to train in parallel')
     cmd:option('-memSize', '20', 'number of entries in linear memory')
+    cmd:option('-maxForwardSteps', '20','maximum forward steps the model makes')
     cmd:text()
 
     local opt = cmd:parse(arg)
@@ -42,11 +43,11 @@ trainingTests["sanityCheck"] = function()
 
     model = Model.create(opt)
 
-   --getting past this point means basic layout of training procedure
+    --getting past this point means basic layout of training procedure
     --makes sense
-    --trainModel(model, nn.DummyCriterion(), dataset, opt, optim.sgd)
+    --trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
     if pcall(trainModel, model,nn.PNLLCriterion(),
-            dataset, opt, optim.sgd) then
+        dataset, opt, optim.sgd) then
         return "...OK!"
     end
     return "...fail!"

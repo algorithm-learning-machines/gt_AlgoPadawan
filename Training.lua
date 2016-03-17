@@ -4,7 +4,6 @@
 --------------------------------------------------------------------------------
 
 
-
 --------------------------------------------------------------------------------
 -- Dummy Criterion for prototyping
 --------------------------------------------------------------------------------
@@ -54,7 +53,7 @@ function PNLLCriterion:sumDifference(input, target)
     ----------------------------------------------------------------------------
     local f1 = memory:clone():log():cmul(target)  --tk * log(mk)
     local f2a = torch.ones(memSize) - target
-    local f2b = torch.ones(memSize) - torch.log(memory) --(1 - tk) * log(1 - mk)
+    local f2b = torch.ones(memSize) - torch.log(memory) --(1-tk) * log(1-mk)
     local f2 = f2a:cmul(f2b) -- tk * log(mk) + (1 - tk) * log(1 - mk)
     return f2:sum()
 
@@ -79,7 +78,7 @@ function PNLLCriterion:backward(input, target)
     ----------------------------------------------------------------------------
     -- Derivative of memory
     ----------------------------------------------------------------------------
-    local dMemory = torch.Tensor(memSize):fill(prob)
+    local dMemory = Tensor(memSize):fill(prob)
     local denom = memory + target - torch.ones(memSize)
     dMemory:cdiv(denom)
     dMemory = dMemory * (-1)
@@ -98,17 +97,35 @@ end
 -- Heavily inspired from torch tutorials on https://github.com/torch/tutorials/
 --------------------------------------------------------------------------------
 function trainModel(model, criterion, dataset, opt, optimMethod)
-    parameters, gradParameters = model:getParameters()
 
-    model:training()
-    batch = dataset:getNextBatch(tonumber(opt.batchSize))
-    
+    ----------------------------------------------------------------------------
+    -- Extract info from parameters
+    ----------------------------------------------------------------------------
+    parameters, gradParameters = model:getParameters()
+    local vectorSize = tonumber(opt.vectorSize)
+    local memSize = tonumber(opt.memSize)
+    local batchSize = tonumber(opt.batchSize)
+    local maxForwardSteps = tonumber(opt.maxForwardSteps)
+
+    ----------------------------------------------------------------------------
+    -- Work in batches
+    ----------------------------------------------------------------------------
+    model:training() -- set model in training mode
+
+    batchSize = 1
+    batch = dataset:getNextBatch(batchSize)
+
+    ----------------------------------------------------------------------------
+    -- Training loop
+    ----------------------------------------------------------------------------
     while batch ~= nil do
 
-        -- create mini batch
+        ------------------------------------------------------------------------
+        -- Create mini batches
+        ------------------------------------------------------------------------
         local inputs = {}
         local targets = {}
-        for i = 1, opt.batchSize do
+        for i = 1, batchSize do
             -- load new sample
             local input = batch[1][i]
             local target = batch[2][i]
@@ -116,9 +133,12 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             table.insert(targets, target)
         end
 
-        batch = dataset:getNextBatch(tonumber(opt.batchSize))
+        --batch = dataset:getNextBatch(batchSize)
         batch = nil -- force rapid exit for now
-        -- create closure to evaluate f(X) and df/dX
+
+        ------------------------------------------------------------------------
+        -- Create closure to evaluate f(X) and df/dX
+        ------------------------------------------------------------------------
         local feval = function(x)
             -- get new parameters
             if x ~= parameters then
@@ -134,17 +154,27 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             -- evaluate function for complete mini batch
             for i = 1,#inputs do
                 -- estimate f
-                -- dummy memory for now
-                local memSize = tonumber(opt.memSize)
                 local memory =
-                    torch.Tensor(memSize, opt.vectorSize):fill(0)
-                -- TODO forward until prob is 1 or threshhold steps
+                Tensor(memSize, vectorSize):fill(0)
                 -- TODO propagate gradients backwards
-
-                local output = model:forward({memory, inputs[i][1]})
+                
+                ----------------------------------------------------------------
+                -- Forward until probability comes close to 1 or until max
+                -- number of forwards steps has been reached
+                ----------------------------------------------------------------
+                local terminated = false
+                local numIterations = 0
+                local clones = {}
+                local output
+                while (not terminated) and numIterations < maxForwardSteps do
+                    output = model:forward({memory, inputs[i][1]})
+                    local prob = output[2]
+                    numIterations = numIterations + 1
+                    clones[numIterations] = cloneModel(model) -- clone model
+                    memory = output[1]
+                end
                 -- Loss is only interested in first row
                 output[1] = output[1][{1}]
-
                 local err = criterion:forward(output, targets[i])
                 f = f + err
 
@@ -155,12 +185,12 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     , torch.zeros(memSize-1, opt.vectorSize), 1)
 
                 df_do[1] = memoryDev
-                df_do[2] = torch.Tensor{df_do[2]}
+                df_do[2] = Tensor{df_do[2]}
 
-                --will need both memory and probability derivatives
                 model:backward({memory, inputs[i][1]}, df_do)
+                collectgarbage()
             end
-
+            
             -- normalize gradients and f(X)
             gradParameters:div(#inputs)
             f = f/#inputs
@@ -178,5 +208,51 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
     end
 end
 
+--------------------------------------------------------------------------------
+-- Clone a neural net model
+-- Heavily inspired from:
+-- https://github.com/oxford-cs-ml-2015/practical6/blob/master/model_utils.lua
+--------------------------------------------------------------------------------
+function cloneModel(model)
 
+    local params, gradParams
+    if model.parameters then
+        params, gradParams = model:parameters()
+        if params == nil then
+            params = {}
+        end
+    end
+
+    local paramsNoGrad
+    if model.parametersNoGrad then
+        paramsNoGrad = model:parametersNoGrad()
+    end
+
+    local mem = torch.MemoryFile("w"):binary()
+    mem:writeObject(model)
+
+    local reader = torch.MemoryFile(mem:storage(), "r"):binary()
+    local clone = reader:readObject()
+    reader:close()
+
+    if model.parameters then
+        local cloneParams, cloneGradParams = clone:parameters()
+        local cloneParamsNoGrad
+        for i = 1, #params do
+            cloneParams[i]:set(params[i])
+            cloneGradParams[i]:set(gradParams[i])
+        end
+        if paramsNoGrad then
+            cloneParamsNoGrad = clone:parametersNoGrad()
+            for i =1,#paramsNoGrad do
+                cloneParamsNoGrad[i]:set(paramsNoGrad[i])
+            end
+        end
+    end
+
+    collectgarbage()
+
+    mem:close()
+    return clone
+end
 

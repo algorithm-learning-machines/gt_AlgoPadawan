@@ -6,6 +6,7 @@ require "torch"
 require "nn"
 require "nngraph"
 require "rnn"
+require "cunn"
 local Dataset = require("Dataset")
 
 
@@ -70,7 +71,7 @@ dataTests["testScalarToBinary"] = function()
 
     local opt = cmd:parse(arg)
 
-    local testA = torch.Tensor(5):fill(0) -- 3
+    local testA = Tensor(5):fill(0) -- 3
     local genA = Dataset.__numToBits(3,5)
     testA[1] = 1
     testA[2] = 1
