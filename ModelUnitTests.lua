@@ -72,9 +72,9 @@ modelTests["sanityCheck"] = function()
     m = Model.create(opt)
     graph.dot(m.fg, 'Model', 'model')
     memory = Tensor(tonumber(opt.memSize), opt.vectorSize):fill(0)
-    print(dataset:getNextBatch(1)[1][1][1])
-    print(memory)
-    print(m:forward({memory, dataset:getNextBatch(1)[1][1][1]}))
+    --print(dataset:getNextBatch(1)[1][1][1])
+    --print(memory)
+    --print(m:forward({memory, dataset:getNextBatch(1)[1][1][1]}))
     local f = m:forward({memory, dataset:getNextBatch(1)[1][1][1]})
 
     --check sizes of forward pass to see if they're what we expect

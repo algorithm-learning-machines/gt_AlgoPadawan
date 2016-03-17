@@ -157,7 +157,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 local memory =
                 Tensor(memSize, vectorSize):fill(0)
                 -- TODO propagate gradients backwards
-                
+
                 ----------------------------------------------------------------
                 -- Forward until probability comes close to 1 or until max
                 -- number of forwards steps has been reached
@@ -165,32 +165,58 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 local terminated = false
                 local numIterations = 0
                 local clones = {}
-                local output
+                local outputs = {}
+                clones[0] = model
                 while (not terminated) and numIterations < maxForwardSteps do
-                    output = model:forward({memory, inputs[i][1]})
+                    local output = clones[numIterations]:forward({memory, inputs[i][1]})
                     local prob = output[2]
                     numIterations = numIterations + 1
                     clones[numIterations] = cloneModel(model) -- clone model
                     memory = output[1]
+                    outputs[numIterations] = output -- needed for backprop
                 end
+                ----------------------------------------------------------------
+
+                ----------------------------------------------------------------
+                -- Propagate gradients from front to back; cumulate gradients
+                ----------------------------------------------------------------
+                --print(outputs)
+                local err = 0
+                for j=#clones,1,-1 do
+                    local currentOutput = outputs[j]
+                    currentOutput[1] = currentOutput[1][{1}]
+                    local currentErr = criterion:forward(currentOutput,
+                        targets[i])
+                    local currentDf_do = criterion:backward(currentOutput,
+                        targets[i])
+
+                    local memoryDev = torch.cat(currentDf_do[1]:reshape(1,
+                        currentDf_do[1]:size(1)),
+                        torch.zeros(memSize-1, opt.vectorSize), 1)
+                    currentDf_do[1] = memoryDev
+                    currentDf_do[2] = Tensor{currentDf_do[2]}
+                    clones[j]:backward({currentOutput[1], inputs[i][1]},
+                        currentDf_do)
+                    err = err + currentErr
+                end
+                ----------------------------------------------------------------
+
                 -- Loss is only interested in first row
-                output[1] = output[1][{1}]
-                local err = criterion:forward(output, targets[i])
-                f = f + err
+                --f = f + err
 
-                -- estimate df/dW
-                local df_do = criterion:backward(output, targets[i])
-                -- consider derivatives for 'scratchpad' mem are 0
-                local memoryDev = torch.cat(df_do[1]:reshape(1,df_do[1]:size(1))
-                    , torch.zeros(memSize-1, opt.vectorSize), 1)
+                ---- estimate df/dW
+                --local df_do = criterion:backward(output, targets[i])
+                ---- consider derivatives for 'scratchpad' mem are 0
+                --local memoryDev = torch.cat(df_do[1]:reshape(1,df_do[1]:size(1))
+                    --, torch.zeros(memSize-1, opt.vectorSize), 1)
 
-                df_do[1] = memoryDev
-                df_do[2] = Tensor{df_do[2]}
+                --df_do[1] = memoryDev
+                --df_do[2] = Tensor{df_do[2]}
 
-                model:backward({memory, inputs[i][1]}, df_do)
+                --model:backward({memory, inputs[i][1]}, df_do)
                 collectgarbage()
             end
-            
+
             -- normalize gradients and f(X)
             gradParameters:div(#inputs)
             f = f/#inputs
