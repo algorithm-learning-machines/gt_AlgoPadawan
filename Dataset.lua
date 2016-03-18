@@ -49,6 +49,7 @@ function Dataset.create(opt)
     self.vectorSize = tonumber(opt.vectorSize)
     self.minVal = tonumber(opt.minVal)
     self.maxVal = tonumber(opt.maxVal)
+    self.memorySize = tonumber(opt.memorySize)
     self.batchIndex = 1 -- initial index
     
     local trainSet = {}
@@ -77,6 +78,14 @@ function Dataset.create(opt)
             self.trainSize, self.vectorSize, self.minVal, self.maxVal, {})
         testSet, _ = Dataset.__genAdditionSet(self. testSize,
             self.vectorSize, self.minVal, self.maxVal, trainNumbers)
+
+    elseif opt.datasetType == "repeat_binary" then
+        trainSet, trainNumbers = Dataset.__genRepeatSet(
+            self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},
+            self.memorySize)
+        testSet, _ = Dataset.__genRepeatSet(self. testSize,
+            self.vectorSize, self.minVal, self.maxVal, trainNumbers,
+            self.memorySize)
     else
         print("Dataset type " .. opt.dataset_type .. "Not implemented yet!")
         os.exit()
@@ -86,6 +95,44 @@ function Dataset.create(opt)
     self.testSet = testSet
 
     return self
+end
+
+--------------------------------------------------------------------------------
+-- Creates dataset with the following form:
+-- scalar -> scalar * vector-of-ones
+-- Task would be to repeat the same pattern of ones for a specific num of times
+--------------------------------------------------------------------------------
+function Dataset.__genRepeatSet(setSize, vectorSize, minVal, maxVal,
+    exclusionSet, memorySize)
+
+    local input = Tensor(setSize, 1)
+    local labels = Tensor(setSize, memorySize, vectorSize)
+    local pattern = torch.random(torch.Tensor(vectorSize), 0, 1)
+
+
+    local inputOriginal = {}
+    for i=1,setSize do
+        local times = torch.random(minVal, maxVal)
+        while (inputOriginal[tostring(times)] ~= nil) or
+            (exclusionSet[tostring(times)] ~= nil) do
+            times = torch.random(minVal, maxVal)
+        end
+        input[i] = torch.Tensor{times}
+        inputOriginal[tostring(times)] = times
+        ------------------------------------------------------------------------
+        -- repeat the pattern specified times
+        -- fill rest of memory with zero
+        ------------------------------------------------------------------------
+        local filler = torch.zeros(memorySize - times, vectorSize)
+        local repeatedPattern = torch.repeatTensor(pattern, times, 1)
+        local target = torch.cat(repeatedPattern, filler, 1)
+        --print(target:size())
+        labels[i] = target
+        --print(i)
+        --print(setSize)
+    end
+    --print("gigi are mere")
+    return {input, labels}, inputOriginal
 end
 
 
