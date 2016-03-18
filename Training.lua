@@ -51,11 +51,11 @@ function PNLLCriterion:sumDifference(input, target)
     ----------------------------------------------------------------------------
     -- Vectorize loss calculus
     ----------------------------------------------------------------------------
-    local f1 = memory:clone():log():cmul(target)  --tk * log(mk)
+    local f1 = memory:clone():log():cmul(target)  -- tk * log(mk)
     local f2a = torch.ones(memSize) - target
-    local f2b = torch.ones(memSize) - torch.log(memory) --(1-tk) * log(1-mk)
+    local f2b = torch.log(torch.ones(memSize) - memory) --(1-tk) * log(1-mk)
     local f2 = f2a:cmul(f2b) -- tk * log(mk) + (1 - tk) * log(1 - mk)
-    return f2:sum()
+    return (f1 + f2):sum()
 
 end
 
@@ -66,6 +66,7 @@ function PNLLCriterion:backward(input, target)
     ----------------------------------------------------------------------------
     -- Extract info from parameters
     ----------------------------------------------------------------------------
+
     local memory = input[1]
     local memSize = memory:size()
     local prob = input[2][1]
@@ -73,7 +74,7 @@ function PNLLCriterion:backward(input, target)
     ----------------------------------------------------------------------------
     -- Derivative of probabilty
     ----------------------------------------------------------------------------
-    local dProb = self:sumDifference(input, target)
+    local dProb = (-1) * self:sumDifference(input, target)
 
     ----------------------------------------------------------------------------
     -- Derivative of memory
