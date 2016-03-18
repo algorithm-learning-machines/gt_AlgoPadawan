@@ -126,12 +126,8 @@ function Dataset.__genRepeatSet(setSize, vectorSize, minVal, maxVal,
         local filler = torch.zeros(memorySize - times, vectorSize)
         local repeatedPattern = torch.repeatTensor(pattern, times, 1)
         local target = torch.cat(repeatedPattern, filler, 1)
-        --print(target:size())
         labels[i] = target
-        --print(i)
-        --print(setSize)
     end
-    --print("gigi are mere")
     return {input, labels}, inputOriginal
 end
 
