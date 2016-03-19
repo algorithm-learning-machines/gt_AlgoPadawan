@@ -31,18 +31,18 @@ modelTests["sanityCheck"] = function()
     cmd:text()
     cmd:text('Options')
     cmd:option('-dataFile','train.t7', 'filename of the training set')
-    cmd:option('-vectorSize', 20, 'size of single training instance vector')
-    cmd:option('-trainSize', 1000, 'size of training set')
+    cmd:option('-vectorSize', 5, 'size of single training instance vector')
+    cmd:option('-trainSize', 80, 'size of training set')
     cmd:option('-testSize', 50, 'size of test set')
-    cmd:option('-datasetType', 'binary_addition', 'dataset type')
-    cmd:option('-minVal', 0, 'minimum scalar value of dataset instances')
-    cmd:option('-maxVal', 5000,'maximum scalar value of dataset instances')
+    cmd:option('-datasetType', 'repeat_binary', 'dataset type')
+    cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
+    cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
+    cmd:option('-memorySize', 500, 'number of entries in memory')
     cmd:text()
 
     local opt = cmd:parse(arg)
 
     dataset = Dataset.create(opt)
-
     ----------------------------------------------------------------------------
     -- Dummy command line options
     ----------------------------------------------------------------------------
@@ -54,9 +54,7 @@ modelTests["sanityCheck"] = function()
     cmd:option('-trainFile','train.t7', 'filename of the training set')
     cmd:option('-testFile', 'test.t7', 'filename of the test set')
     cmd:option('-batchSize', '16', 'number of sequences to train in parallel')
-    cmd:option('-memSize', '20', 'number of entries in linear memory')
     cmd:text()
-
     opt = cmd:parse(arg)
 
     ----------------------------------------------------------------------------
@@ -66,15 +64,12 @@ modelTests["sanityCheck"] = function()
     setmetatable(dataset, Dataset)
     dataset:resetBatchIndex()
 
-
-    opt.vectorSize = dataset.trainSet[1]:size(3)
+    opt.vectorSize = dataset.vectorSize
+    opt.memorySize = dataset.memorySize
+    opt.inputSize = dataset.inputSize
 
     m = Model.create(opt)
-    graph.dot(m.fg, 'Model', 'model')
-    memory = Tensor(tonumber(opt.memSize), opt.vectorSize):fill(0)
-    --print(dataset:getNextBatch(1)[1][1][1])
-    --print(memory)
-    --print(m:forward({memory, dataset:getNextBatch(1)[1][1][1]}))
+    memory = Tensor(opt.memorySize, opt.vectorSize):fill(0)
     local f = m:forward({memory, dataset:getNextBatch(1)[1][1][1]})
 
     --check sizes of forward pass to see if they're what we expect

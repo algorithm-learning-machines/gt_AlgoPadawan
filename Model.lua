@@ -13,7 +13,9 @@ local Model = {}
 --------------------------------------------------------------------------------
 function Model.create(opt)
     local vectorSize = tonumber(opt.vectorSize)
-    local memSize = tonumber(opt.memSize)
+    local memSize = tonumber(opt.memorySize)
+    print(memSize)
+    local inputSize = tonumber(opt.inputSize)
 
     ----------------------------------------------------------------------------
     --  Initial Memory
@@ -41,7 +43,7 @@ function Model.create(opt)
     ----------------------------------------------------------------------------
     -- Value Extractor
     ----------------------------------------------------------------------------
-    --TODO for current problem may not need to send value here
+    --TODO for current problems may not need to send value here
     local addressTransp = nn.Reshape(1, memSize)(address)
     local value = nn.MM()({addressTransp, initialMem})
     ----------------------------------------------------------------------------
@@ -53,7 +55,7 @@ function Model.create(opt)
     local inputVal = nn.JoinTable(1)({input, address})
     local inputValAddr = nn.JoinTable(1)({inputVal, reshapedValue})
     local addrCalc =
-        nn.GRU(vectorSize + memSize + vectorSize, memSize)(inputValAddr)
+        nn.GRU(inputSize + memSize + vectorSize, memSize)(inputValAddr)
     ----------------------------------------------------------------------------
 
 
@@ -61,7 +63,7 @@ function Model.create(opt)
     -- Next value calculator
     ----------------------------------------------------------------------------
     local valueCalc =
-        nn.GRU(vectorSize + memSize + vectorSize, vectorSize)(inputValAddr)
+        nn.GRU(inputSize + memSize + vectorSize, vectorSize)(inputValAddr)
     ----------------------------------------------------------------------------
 
 

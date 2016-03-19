@@ -23,15 +23,20 @@ trainingTests["sanityCheck"] = function()
     ----------------------------------------------------------------------------
     local cmd = torch.CmdLine()
     cmd:text()
-    cmd:text('Training a neural architecture to learn algorithms')
+    cmd:text('Generate datasets for learning algorithms')
     cmd:text()
     cmd:text('Options')
     cmd:option('-trainFile','train.t7', 'filename of the training set')
-    cmd:option('-testFile', 'test.t7', 'filename of the test set')
-    cmd:option('-batchSize', '16', 'number of sequences to train in parallel')
-    cmd:option('-memSize', '20', 'number of entries in linear memory')
-    cmd:option('-maxForwardSteps', '20','maximum forward steps the model makes')
+    cmd:option('-vectorSize', 5, 'size of single training instance vector')
+    cmd:option('-trainSize', 80, 'size of training set')
+    cmd:option('-testSize', 50, 'size of test set')
+    cmd:option('-datasetType', 'repeat_binary', 'dataset type')
+    cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
+    cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
+    cmd:option('-memorySize', 500, 'number of entries in memory')
+    cmd:option('-maxForwardSteps', '20', 'maximum forward steps model makes')
     cmd:text()
+
 
     local opt = cmd:parse(arg)
 
@@ -39,7 +44,11 @@ trainingTests["sanityCheck"] = function()
     setmetatable(dataset, Dataset)
     dataset:resetBatchIndex()
 
-    opt.vectorSize = dataset.trainSet[1]:size(3)
+    local cmd = torch.Cmd
+
+    opt.vectorSize = dataset.vectorSize
+    opt.memorySize = dataset.memorySize
+    opt.inputSize = dataset.inputSize
 
     model = Model.create(opt)
 

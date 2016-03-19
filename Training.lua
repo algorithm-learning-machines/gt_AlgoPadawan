@@ -104,7 +104,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
     ----------------------------------------------------------------------------
     parameters, gradParameters = model:getParameters()
     local vectorSize = tonumber(opt.vectorSize)
-    local memSize = tonumber(opt.memSize)
+    local memSize = tonumber(opt.memorySize)
     local batchSize = tonumber(opt.batchSize)
     local maxForwardSteps = tonumber(opt.maxForwardSteps)
 
@@ -199,7 +199,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 for j=#clones - 1,0,-1 do
 
                     local currentOutput = cloneOutputs[j]
-                    currentOutput[1] = currentOutput[1][{1}]
+                    --currentOutput[1] = currentOutput[1][{1}]
 
                     ------------------------------------------------------------
                     -- Find error and output gradients at this time step
@@ -208,15 +208,15 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                         targets[i])
                     local currentDf_do = criterion:backward(currentOutput,
                         targets[i])
-
-                    local memoryDev = torch.cat(currentDf_do[1]:reshape(1,
-                        currentDf_do[1]:size(1)),
-                        torch.zeros(memSize-1, opt.vectorSize), 1)
+                    -- TODO generalize to work on different problems
+                    --local memoryDev = torch.cat(currentDf_do[1]:reshape(1,
+                        --currentDf_do[1]:size(1)),
+                        --torch.zeros(memSize-1, opt.vectorSize), 1)
 
                     ------------------------------------------------------------
                     -- Output derivatives
                     ------------------------------------------------------------
-                    currentDf_do[1] = memoryDev
+                    --currentDf_do[1] = memoryDev
                     currentDf_do[2] = Tensor{currentDf_do[2]}
 
                     clones[j]:backward({currentOutput[1], cloneInputs[i][1]},

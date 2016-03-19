@@ -11,7 +11,8 @@ require "torch"
 -- Internal modules
 --------------------------------------------------------------------------------
 Dataset = require("Dataset")
-
+-- TODO temporary hack
+Tensor = torch.Tensor
 
 --------------------------------------------------------------------------------
 -- Command line options
@@ -22,13 +23,15 @@ cmd:text('Generate datasets for learning algorithms')
 cmd:text()
 cmd:text('Options')
 cmd:option('-dataFile','train.t7', 'filename of the training set')
-cmd:option('-vectorSize', 20, 'size of single training instance vector')
-cmd:option('-trainSize', 1000, 'size of training set')
+cmd:option('-vectorSize', 5, 'size of single training instance vector')
+cmd:option('-trainSize', 80, 'size of training set')
 cmd:option('-testSize', 50, 'size of test set')
-cmd:option('-datasetType', 'binary_addition', 'dataset type')
-cmd:option('-minVal', 0, 'minimum scalar value of dataset instances')
-cmd:option('-maxVal', 5000,'maximum scalar value of dataset instances')
+cmd:option('-datasetType', 'repeat_binary', 'dataset type')
+cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
+cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
+cmd:option('-memorySize', 500, 'number of entries in memory')
 cmd:text()
+
 
 local opt = cmd:parse(arg)
 

@@ -39,6 +39,8 @@ end
 
 --------------------------------------------------------------------------------
 -- Init dataset according to given parameters from main entry point
+-- TODO must find a way to decouple dataset creation from batch manipulation
+-- Dataset shape differs
 --------------------------------------------------------------------------------
 function Dataset.create(opt)
     self = {}
@@ -49,9 +51,10 @@ function Dataset.create(opt)
     self.vectorSize = tonumber(opt.vectorSize)
     self.minVal = tonumber(opt.minVal)
     self.maxVal = tonumber(opt.maxVal)
+    -- TODO this line couples dataset to model, not necessarily good
     self.memorySize = tonumber(opt.memorySize)
     self.batchIndex = 1 -- initial index
-    
+
     local trainSet = {}
     local testSet = {}
     if opt.datasetType == "binary_addition" then
@@ -80,6 +83,7 @@ function Dataset.create(opt)
             self.vectorSize, self.minVal, self.maxVal, trainNumbers)
 
     elseif opt.datasetType == "repeat_binary" then
+        self.inputSize = 1 -- specifically for this dataset
         trainSet, trainNumbers = Dataset.__genRepeatSet(
             self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},
             self.memorySize)
@@ -105,7 +109,7 @@ end
 function Dataset.__genRepeatSet(setSize, vectorSize, minVal, maxVal,
     exclusionSet, memorySize)
 
-    local input = Tensor(setSize, 1)
+    local input = Tensor(setSize, 1, 1)
     local labels = Tensor(setSize, memorySize, vectorSize)
     local pattern = torch.random(torch.Tensor(vectorSize), 0, 1)
 
@@ -117,7 +121,7 @@ function Dataset.__genRepeatSet(setSize, vectorSize, minVal, maxVal,
             (exclusionSet[tostring(times)] ~= nil) do
             times = torch.random(minVal, maxVal)
         end
-        input[i] = torch.Tensor{times}
+        input[i][1] = torch.Tensor{times}
         inputOriginal[tostring(times)] = times
         ------------------------------------------------------------------------
         -- repeat the pattern specified times
