@@ -14,7 +14,6 @@ local Model = {}
 function Model.create(opt)
     local vectorSize = tonumber(opt.vectorSize)
     local memSize = tonumber(opt.memorySize)
-    print(memSize)
     local inputSize = tonumber(opt.inputSize)
 
     ----------------------------------------------------------------------------

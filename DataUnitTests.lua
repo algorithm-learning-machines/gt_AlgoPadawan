@@ -109,12 +109,11 @@ dataTests["testRepeatDatasetShape"] = function()
     local dataset = Dataset.create(opt)
     local memSize = tonumber(opt.memorySize)
     local vecSize = tonumber(opt.vectorSize)
-
     ----------------------------------------------------------------------------
     -- Test if entries have the expected shaped
     ----------------------------------------------------------------------------
     if dataset.trainSet[2][1]:isSameSizeAs(torch.Tensor(memSize, vecSize)) and
-        dataset.trainSet[1][1]:isSameSizeAs(torch.Tensor(1)) then
+        dataset.trainSet[1][1]:isSameSizeAs(torch.Tensor(1,1)) then
         return "...OK!"
     end
     return "...failed!"

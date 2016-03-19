@@ -199,7 +199,13 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 for j=#clones - 1,0,-1 do
 
                     local currentOutput = cloneOutputs[j]
-                    --currentOutput[1] = currentOutput[1][{1}]
+                    if opt.targetIndex ~= nil then
+                        local ix = tonumber(opt.targetIndex)
+                        currentOutput[1] =
+                            currentOutput[1][{{1, ix}, {}}]:t():squeeze()
+                        --print(currentOutput[1])
+                        --print(targets[i])
+                    end
 
                     ------------------------------------------------------------
                     -- Find error and output gradients at this time step
@@ -208,15 +214,17 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                         targets[i])
                     local currentDf_do = criterion:backward(currentOutput,
                         targets[i])
-                    -- TODO generalize to work on different problems
-                    --local memoryDev = torch.cat(currentDf_do[1]:reshape(1,
-                        --currentDf_do[1]:size(1)),
-                        --torch.zeros(memSize-1, opt.vectorSize), 1)
+
+                    if opt.targetIndex ~= nil then
+                        local memoryDev = torch.cat(currentDf_do[1]:reshape(1,
+                        currentDf_do[1]:size(1)),
+                        torch.zeros(memSize-1, opt.vectorSize), 1)
+                        currentDf_do[1] = memoryDev
+                    end
 
                     ------------------------------------------------------------
                     -- Output derivatives
                     ------------------------------------------------------------
-                    --currentDf_do[1] = memoryDev
                     currentDf_do[2] = Tensor{currentDf_do[2]}
 
                     clones[j]:backward({currentOutput[1], cloneInputs[i][1]},
@@ -226,7 +234,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Cumulate gradients
                     ------------------------------------------------------------
-
                     --TODO check if accumulation is done correctly
 
                     if cumulatedDParams == nil then

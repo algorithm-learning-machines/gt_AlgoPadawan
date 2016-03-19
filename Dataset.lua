@@ -58,6 +58,7 @@ function Dataset.create(opt)
     local trainSet = {}
     local testSet = {}
     if opt.datasetType == "binary_addition" then
+        self.inputSize = 10
         local trainNumbers = {}
          trainSet, trainNumbers = Dataset.__genBinaryOpSet(
             self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},

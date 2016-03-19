@@ -13,7 +13,7 @@ trainingTests = {}
 -- Sanity check for training, if this fails, something is wrong at the core of
 -- the training procedure used
 --------------------------------------------------------------------------------
-trainingTests["sanityCheck"] = function()
+trainingTests["TrainOnRepeaterCheck"] = function()
     Dataset = require("Dataset")
     Model = require("Model")
     require "Training"
@@ -63,6 +63,60 @@ trainingTests["sanityCheck"] = function()
 
 end
 
+--------------------------------------------------------------------------------
+-- Sanity check for training, if this fails, something is wrong at the core of
+-- the training procedure used
+--------------------------------------------------------------------------------
+trainingTests["TrainOnBinaryAdditionCheck"] = function()
+    Dataset = require("Dataset")
+    Model = require("Model")
+    require "Training"
+
+    ----------------------------------------------------------------------------
+    -- Dummy command line options
+    ----------------------------------------------------------------------------
+    local cmd = torch.CmdLine()
+    cmd:text()
+    cmd:text('Generate datasets for learning algorithms')
+    cmd:text()
+    cmd:text('Options')
+    cmd:option('-trainFile','train.t7', 'filename of the training set')
+    cmd:option('-vectorSize', 10, 'size of single training instance vector')
+    cmd:option('-trainSize', 80, 'size of training set')
+    cmd:option('-testSize', 50, 'size of test set')
+    cmd:option('-datasetType', 'binary_addition', 'dataset type')
+    cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
+    cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
+    cmd:option('-memorySize', 500, 'number of entries in memory')
+    cmd:option('-maxForwardSteps', '20', 'maximum forward steps model makes')
+    cmd:text()
+
+
+    local opt = cmd:parse(arg)
+    dataset = Dataset.create(opt)
+    --dataset = torch.load(opt.trainFile)
+    --setmetatable(dataset, Dataset)
+    dataset:resetBatchIndex()
+
+    local cmd = torch.Cmd
+
+    opt.vectorSize = dataset.vectorSize
+    opt.memorySize = dataset.memorySize
+    opt.inputSize = dataset.inputSize
+    opt.targetIndex = 1
+
+    model = Model.create(opt)
+
+    --getting past this point means basic layout of training procedure
+    --makes sense
+    --trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
+    if pcall(trainModel, model,nn.PNLLCriterion(),
+        dataset, opt, optim.sgd) then
+        return "...OK!"
+    end
+    return "...fail!"
+
+end
 
 --------------------------------------------------------------------------------
 -- Perform gradient checking on custom criterion
