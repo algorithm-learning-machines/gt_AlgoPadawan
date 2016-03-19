@@ -94,8 +94,6 @@ trainingTests["TrainOnBinaryAdditionCheck"] = function()
 
     local opt = cmd:parse(arg)
     dataset = Dataset.create(opt)
-    --dataset = torch.load(opt.trainFile)
-    --setmetatable(dataset, Dataset)
     dataset:resetBatchIndex()
 
     local cmd = torch.Cmd

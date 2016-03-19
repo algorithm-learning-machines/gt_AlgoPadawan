@@ -167,17 +167,23 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 local cloneInputs = {}
                 local cloneOutputs = {}
                 clones[0] = model
-                cloneInputs[0] = memory
-
+                --cloneInputs[0] = {memory, inputs[i][1]}
+                local inputsIndex = 1 -- current input index;
                 while (not terminated) and numIterations < maxForwardSteps do
+                    local currentInput = nil
+                    --print(inputs[i]:size(1))
+                    if inputsIndex <= inputs[i]:size(1) then
+                        currentInput = inputs[i][inputsIndex]
+                    else
+                        currentInput = torch.zeros(inputs[i][1]:size())
+                    end
+                    cloneInputs[numIterations] = {memory, currentInput}
 
-                    -- inputs should change here
                     local output = clones[numIterations]:forward(
-                        {cloneInputs[numIterations], inputs[i][1]})
+                        cloneInputs[numIterations])
 
-                   cloneOutputs[numIterations] = output -- needed for Criterion
 
-                    --local prob = output[2]
+                    cloneOutputs[numIterations] = output -- needed for Criterion
                     numIterations = numIterations + 1
 
                     ------------------------------------------------------------
@@ -185,8 +191,9 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
 
                     clones[numIterations] = cloneModel(model) -- clone model
-                    cloneInputs[numIterations] = memory -- needed for backprop
+                    -- needed for backprop
                     memory = output[1]
+                    inputsIndex = inputsIndex + 1
 
                 end
 
@@ -203,8 +210,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                         local ix = tonumber(opt.targetIndex)
                         currentOutput[1] =
                             currentOutput[1][{{1, ix}, {}}]:t():squeeze()
-                        --print(currentOutput[1])
-                        --print(targets[i])
                     end
 
                     ------------------------------------------------------------
@@ -227,7 +232,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     currentDf_do[2] = Tensor{currentDf_do[2]}
 
-                    clones[j]:backward({currentOutput[1], cloneInputs[i][1]},
+                    clones[j]:backward(cloneInputs[i],
                         currentDf_do)
 
                     local params, dParams = clones[j]:getParameters()
