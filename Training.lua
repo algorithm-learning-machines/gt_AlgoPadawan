@@ -107,20 +107,20 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
     local memSize = tonumber(opt.memorySize)
     local batchSize = tonumber(opt.batchSize)
     local maxForwardSteps = tonumber(opt.maxForwardSteps)
-
+    print(batchSize)
     ----------------------------------------------------------------------------
     -- Work in batches
     ----------------------------------------------------------------------------
     model:training() -- set model in training mode
 
-    batchSize = 1
+    batchSize = 16
     batch = dataset:getNextBatch(batchSize)
 
     ----------------------------------------------------------------------------
     -- Training loop
     ----------------------------------------------------------------------------
     while batch ~= nil do
-
+        print("test")
         ------------------------------------------------------------------------
         -- Create mini batches
         ------------------------------------------------------------------------
@@ -133,10 +133,10 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             table.insert(inputs, input)
             table.insert(targets, target)
         end
-
-        --batch = dataset:getNextBatch(batchSize)
-        batch = nil -- force rapid exit for now
-
+        --print(inputs[1]:size())
+        batch = dataset:getNextBatch(batchSize)
+        --batch = nil -- force rapid exit for now
+        --print(#inputs)
         ------------------------------------------------------------------------
         -- Create closure to evaluate f(X) and df/dX
         ------------------------------------------------------------------------
@@ -156,7 +156,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             for i = 1,#inputs do
                 -- estimate f
                 local memory = Tensor(memSize, vectorSize):fill(0)
-
                 ----------------------------------------------------------------
                 -- Forward until probability comes close to 1 or until max
                 -- number of forwards steps has been reached
@@ -167,17 +166,16 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 local cloneInputs = {}
                 local cloneOutputs = {}
                 clones[0] = model
-                --cloneInputs[0] = {memory, inputs[i][1]}
                 local inputsIndex = 1 -- current input index;
                 while (not terminated) and numIterations < maxForwardSteps do
                     local currentInput = nil
-                    --print(inputs[i]:size(1))
                     if inputsIndex <= inputs[i]:size(1) then
                         currentInput = inputs[i][inputsIndex]
                     else
                         currentInput = torch.zeros(inputs[i][1]:size())
                     end
                     cloneInputs[numIterations] = {memory, currentInput}
+                    
 
                     local output = clones[numIterations]:forward(
                         cloneInputs[numIterations])
@@ -189,15 +187,22 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Remember models and their respective inputs
                     ------------------------------------------------------------
-
+                    -- TODO
+                    -- cloneModel seems to not work correctly at next batch!!!
                     clones[numIterations] = cloneModel(model) -- clone model
+                    local _, cDParams = clones[numIterations]:getParameters()
+                    local _,mDParams = model:getParameters()
+                    print("BEGIN")
+                    print(i)
+                    print(cDParams:size())
+                    print(mDParams:size())
+                    print("END")
+
                     -- needed for backprop
                     memory = output[1]
                     inputsIndex = inputsIndex + 1
-
                 end
-
-                ----------------------------------------------------------------
+                                ----------------------------------------------------------------
                 -- Propagate gradients from front to back; cumulate gradients
                 ----------------------------------------------------------------
 
@@ -211,7 +216,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                         currentOutput[1] =
                             currentOutput[1][{{1, ix}, {}}]:t():squeeze()
                     end
-
                     ------------------------------------------------------------
                     -- Find error and output gradients at this time step
                     ------------------------------------------------------------
@@ -240,10 +244,10 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     -- Cumulate gradients
                     ------------------------------------------------------------
                     --TODO check if accumulation is done correctly
-
                     if cumulatedDParams == nil then
                         cumulatedDParams = dParams
                     else
+
                         cumulatedDParams = cumulatedDParams + dParams
                     end
 
