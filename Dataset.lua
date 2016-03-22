@@ -58,7 +58,7 @@ function Dataset.create(opt)
     local trainSet = {}
     local testSet = {}
     if opt.datasetType == "binary_addition" then
-        self.inputSize = 10
+        self.inputSize = self.vectorSize
         local trainNumbers = {}
          trainSet, trainNumbers = Dataset.__genBinaryOpSet(
             self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},
@@ -91,6 +91,16 @@ function Dataset.create(opt)
         testSet, _ = Dataset.__genRepeatSet(self. testSize,
             self.vectorSize, self.minVal, self.maxVal, trainNumbers,
             self.memorySize)
+    elseif opt.datasetType == "repeat_once" then
+        self.inputSize = self.vectorSize
+        trainSet, trainNumbers = Dataset.__genRepeatOnce(
+            self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},
+            self.memorySize)
+        testSet, _ = Dataset.__genRepeatOnce(self. testSize,
+            self.vectorSize, self.minVal, self.maxVal, trainNumbers,
+            self.memorySize)
+
+
     else
         print("Dataset type " .. opt.dataset_type .. "Not implemented yet!")
         os.exit()
@@ -104,11 +114,45 @@ end
 
 --------------------------------------------------------------------------------
 -- Creates dataset with the following form:
+-- input: Initial Memory (Template on first position)
+-- target: Final Memory (Template on first two positions)
+--------------------------------------------------------------------------------
+function Dataset.__genRepeatOnce(
+     setSize, vectorSize, minVal, maxVal, exclusionSet, memorySize)
+    local inputs = Tensor(setSize, memorySize, vectorSize)
+    local labels = Tensor(setSize, memorySize, vectorSize)
+
+
+    local inputOriginal = {}
+    for i=1,setSize do
+        local template = Dataset.__numToBits(torch.random(minVal, maxVal),
+            vectorSize)
+        while (inputOriginal[tostring(template)] ~= nil) or
+            (exclusionSet[tostring(template)] ~= nil) do
+             template = Dataset.__numToBits(torch.random(minVal, maxVal),
+                vectorSize)
+        end
+        local inputMemory = torch.repeatTensor(torch.zeros(1, vectorSize),
+            memorySize - 1, 1)
+        inputMemory = torch.cat(template:t(), inputMemory, 1)
+        inputs[i] = inputMemory
+        inputOriginal[tostring(template)] = template
+        outputMemory = inputMemory:clone()
+        outputMemory[2] = template:clone()
+        labels[i] = outputMemory
+    end
+    return {input, labels}, inputOriginal
+
+end
+
+
+--------------------------------------------------------------------------------
+-- Creates dataset with the following form:
 -- scalar -> scalar * vector-of-ones
 -- Task would be to repeat the same pattern of ones for a specific num of times
 --------------------------------------------------------------------------------
 function Dataset.__genRepeatSet(setSize, vectorSize, minVal, maxVal,
-    exclusionSet, memorySize)
+        exclusionSet, memorySize)
 
     local input = Tensor(setSize, 1, 1)
     local labels = Tensor(setSize, memorySize, vectorSize)
