@@ -107,20 +107,19 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
     local memSize = tonumber(opt.memorySize)
     local batchSize = tonumber(opt.batchSize)
     local maxForwardSteps = tonumber(opt.maxForwardSteps)
-    print(batchSize)
     ----------------------------------------------------------------------------
     -- Work in batches
     ----------------------------------------------------------------------------
     model:training() -- set model in training mode
 
-    batchSize = 16
     batch = dataset:getNextBatch(batchSize)
-
+    local batchNum = 1
     ----------------------------------------------------------------------------
     -- Training loop
     ----------------------------------------------------------------------------
     while batch ~= nil do
-        print("test")
+        --print("index in batch "..batchNum)
+        batchNum = batchNum + 1
         ------------------------------------------------------------------------
         -- Create mini batches
         ------------------------------------------------------------------------
@@ -133,10 +132,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             table.insert(inputs, input)
             table.insert(targets, target)
         end
-        --print(inputs[1]:size())
         batch = dataset:getNextBatch(batchSize)
-        --batch = nil -- force rapid exit for now
-        --print(#inputs)
         ------------------------------------------------------------------------
         -- Create closure to evaluate f(X) and df/dX
         ------------------------------------------------------------------------
@@ -175,7 +171,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                         currentInput = torch.zeros(inputs[i][1]:size())
                     end
                     cloneInputs[numIterations] = {memory, currentInput}
-                    
 
                     local output = clones[numIterations]:forward(
                         cloneInputs[numIterations])
@@ -187,27 +182,20 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Remember models and their respective inputs
                     ------------------------------------------------------------
-                    -- TODO
-                    -- cloneModel seems to not work correctly at next batch!!!
+
                     clones[numIterations] = cloneModel(model) -- clone model
-                    local _, cDParams = clones[numIterations]:getParameters()
-                    local _,mDParams = model:getParameters()
-                    print("BEGIN")
-                    print(i)
-                    print(cDParams:size())
-                    print(mDParams:size())
-                    print("END")
+                    local _, d = clones[numIterations]:getParameters()
 
                     -- needed for backprop
                     memory = output[1]
                     inputsIndex = inputsIndex + 1
                 end
-                                ----------------------------------------------------------------
+
+                ----------------------------------------------------------------
                 -- Propagate gradients from front to back; cumulate gradients
                 ----------------------------------------------------------------
 
                 local err = 0
-                local cumulatedDParams = nil
                 for j=#clones - 1,0,-1 do
 
                     local currentOutput = cloneOutputs[j]
@@ -239,23 +227,9 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     clones[j]:backward(cloneInputs[i],
                         currentDf_do)
 
-                    local params, dParams = clones[j]:getParameters()
-                    ------------------------------------------------------------
-                    -- Cumulate gradients
-                    ------------------------------------------------------------
-                    --TODO check if accumulation is done correctly
-                    if cumulatedDParams == nil then
-                        cumulatedDParams = dParams
-                    else
-
-                        cumulatedDParams = cumulatedDParams + dParams
-                    end
-
                     err = err + currentErr
                 end
                 f = f + err
-                gradParameters:add(cumulatedDParams)
-
                 collectgarbage()
             end
 
@@ -282,7 +256,6 @@ end
 -- https://github.com/oxford-cs-ml-2015/practical6/blob/master/model_utils.lua
 --------------------------------------------------------------------------------
 function cloneModel(model)
-
     local params, gradParams
     if model.parameters then
         params, gradParams = model:parameters()
@@ -305,21 +278,32 @@ function cloneModel(model)
 
     if model.parameters then
         local cloneParams, cloneGradParams = clone:parameters()
+        local acc = 0
+        for k,v in pairs(cloneGradParams) do
+            local num = 1
+            for x=1,v:nDimension() do
+                num = num * v:size(x)
+            end
+            acc = acc + num
+        end
+
         local cloneParamsNoGrad
         for i = 1, #params do
-            cloneParams[i]:set(params[i])
-            cloneGradParams[i]:set(gradParams[i])
+            -- Sets reference to model's parameters
+             cloneParams[i]:set(params[i])
+             cloneGradParams[i]:set(gradParams[i])
+
         end
         if paramsNoGrad then
             cloneParamsNoGrad = clone:parametersNoGrad()
             for i =1,#paramsNoGrad do
+                -- Sets reference to model's parameters
                 cloneParamsNoGrad[i]:set(paramsNoGrad[i])
             end
         end
     end
 
     collectgarbage()
-
     mem:close()
     return clone
 end

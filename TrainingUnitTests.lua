@@ -28,14 +28,13 @@ trainingTests["TrainOnRepeaterCheck"] = function()
     cmd:text('Options')
     cmd:option('-dataFile','train.t7', 'filename of the training set')
     cmd:option('-vectorSize', 5, 'size of single training instance vector')
-    cmd:option('-trainSize', 80, 'size of training set')
-    cmd:option('-testSize', 50, 'size of test set')
+    cmd:option('-trainSize', 8, 'size of training set')
+    cmd:option('-testSize', 5, 'size of test set')
     cmd:option('-datasetType', 'repeat_binary', 'dataset type')
     cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
     cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
     cmd:option('-memorySize', 500, 'number of entries in memory')
     cmd:text()
-    
     local opt = cmd:parse(arg)
     dataset = Dataset.create(opt)
     dataset:resetBatchIndex()
@@ -49,13 +48,13 @@ trainingTests["TrainOnRepeaterCheck"] = function()
     cmd:text('Options')
     cmd:option('-trainFile','train.t7', 'filename of the training set')
     cmd:option('-vectorSize', 5, 'size of single training instance vector')
-    cmd:option('-trainSize', 80, 'size of training set')
-    cmd:option('-testSize', 50, 'size of test set')
+    cmd:option('-trainSize', 3, 'size of training set')
+    cmd:option('-testSize', 5, 'size of test set')
     cmd:option('-datasetType', 'repeat_binary', 'dataset type')
     cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
     cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
     cmd:option('-memorySize', 500, 'number of entries in memory')
-    cmd:option('-maxForwardSteps', '20', 'maximum forward steps model makes')
+    cmd:option('-maxForwardSteps', '2', 'maximum forward steps model makes')
     cmd:text()
 
 
@@ -67,14 +66,14 @@ trainingTests["TrainOnRepeaterCheck"] = function()
 
     model = Model.create(opt)
 
-    opt.batchSize = 16
+    opt.batchSize = opt.trainSize
     --getting past this point means basic layout of training procedure
     --makes sense
-    trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
-    --if pcall(trainModel, model,nn.PNLLCriterion(),
-        --dataset, opt, optim.sgd) then
-        --return "...OK!"
-    --end
+    --trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
+    if pcall(trainModel, model,nn.PNLLCriterion(),
+        dataset, opt, optim.sgd) then
+        return "...OK!"
+    end
     return "...fail!"
 
 end
@@ -83,54 +82,54 @@ end
 -- Sanity check for training, if this fails, something is wrong at the core of
 -- the training procedure used
 --------------------------------------------------------------------------------
---trainingTests["TrainOnBinaryAdditionCheck"] = function()
-    --Dataset = require("Dataset")
-    --Model = require("Model")
-    --require "Training"
+trainingTests["TrainOnBinaryAdditionCheck"] = function()
+    Dataset = require("Dataset")
+    Model = require("Model")
+    require "Training"
 
-    ------------------------------------------------------------------------------
-    ---- Dummy command line options
-    ------------------------------------------------------------------------------
-    --local cmd = torch.CmdLine()
-    --cmd:text()
-    --cmd:text('Generate datasets for learning algorithms')
-    --cmd:text()
-    --cmd:text('Options')
-    --cmd:option('-trainFile','train.t7', 'filename of the training set')
-    --cmd:option('-vectorSize', 10, 'size of single training instance vector')
-    --cmd:option('-trainSize', 80, 'size of training set')
-    --cmd:option('-testSize', 50, 'size of test set')
-    --cmd:option('-datasetType', 'binary_addition', 'dataset type')
-    --cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
-    --cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
-    --cmd:option('-memorySize', 500, 'number of entries in memory')
-    --cmd:option('-maxForwardSteps', '20', 'maximum forward steps model makes')
-    --cmd:text()
+    ----------------------------------------------------------------------------
+    -- Dummy command line options
+    ----------------------------------------------------------------------------
+    local cmd = torch.CmdLine()
+    cmd:text()
+    cmd:text('Generate datasets for learning algorithms')
+    cmd:text()
+    cmd:text('Options')
+    cmd:option('-trainFile','train.t7', 'filename of the training set')
+    cmd:option('-vectorSize', 10, 'size of single training instance vector')
+    cmd:option('-trainSize', 3, 'size of training set')
+    cmd:option('-testSize', 5, 'size of test set')
+    cmd:option('-datasetType', 'binary_addition', 'dataset type')
+    cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
+    cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
+    cmd:option('-memorySize', 500, 'number of entries in memory')
+    cmd:option('-maxForwardSteps', '2', 'maximum forward steps model makes')
+    cmd:text()
 
 
-    --local opt = cmd:parse(arg)
-    --dataset = Dataset.create(opt)
-    --dataset:resetBatchIndex()
+    local opt = cmd:parse(arg)
+    dataset = Dataset.create(opt)
+    dataset:resetBatchIndex()
 
-    --local cmd = torch.Cmd
+    local cmd = torch.Cmd
 
-    --opt.vectorSize = dataset.vectorSize
-    --opt.memorySize = dataset.memorySize
-    --opt.inputSize = dataset.inputSize
-    --opt.targetIndex = 1
+    opt.vectorSize = dataset.vectorSize
+    opt.memorySize = dataset.memorySize
+    opt.inputSize = dataset.inputSize
+    opt.targetIndex = 1
 
-    --model = Model.create(opt)
+    model = Model.create(opt)
+    opt.batchSize = opt.trainSize
+    --getting past this point means basic layout of training procedure
+    --makes sense
+    --trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
+    if pcall(trainModel, model,nn.PNLLCriterion(),
+        dataset, opt, optim.sgd) then
+        return "...OK!"
+    end
+    return "...fail!"
 
-    ----getting past this point means basic layout of training procedure
-    ----makes sense
-    ----trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
-    --if pcall(trainModel, model,nn.PNLLCriterion(),
-        --dataset, opt, optim.sgd) then
-        --return "...OK!"
-    --end
-    --return "...fail!"
-
---end
+end
 
 --------------------------------------------------------------------------------
 -- Perform gradient checking on custom criterion
