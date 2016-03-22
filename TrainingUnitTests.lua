@@ -132,6 +132,60 @@ trainingTests["TrainOnBinaryAdditionCheck"] = function()
 end
 
 --------------------------------------------------------------------------------
+-- Tests that training on repeat once dataset makes sense
+--------------------------------------------------------------------------------
+trainingTests["TrainOnRepeatOnceCheck"] = function()
+    Dataset = require("Dataset")
+    Model = require("Model")
+    require "Training"
+
+    ----------------------------------------------------------------------------
+    -- Dummy command line options
+    ----------------------------------------------------------------------------
+    local cmd = torch.CmdLine()
+    cmd:text()
+    cmd:text('Generate datasets for learning algorithms')
+    cmd:text()
+    cmd:text('Options')
+    cmd:option('-trainFile','train.t7', 'filename of the training set')
+    cmd:option('-vectorSize', 10, 'size of single training instance vector')
+    cmd:option('-trainSize', 3, 'size of training set')
+    cmd:option('-testSize', 5, 'size of test set')
+    cmd:option('-datasetType', 'repeat_once', 'dataset type')
+    cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
+    cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
+    cmd:option('-memorySize', 20, 'number of entries in memory')
+    cmd:option('-maxForwardSteps', '2', 'maximum forward steps model makes')
+    cmd:text()
+
+
+    local opt = cmd:parse(arg)
+    dataset = Dataset.create(opt)
+    dataset:resetBatchIndex()
+
+    opt.vectorSize = dataset.vectorSize
+    opt.memorySize = dataset.memorySize
+    opt.inputSize = dataset.inputSize
+    opt.noInput = true
+
+    model = Model.create(opt)
+    opt.batchSize = opt.trainSize
+    --getting past this point means basic layout of training procedure
+    --makes sense
+    --trainModelNoMemory(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
+    if pcall(trainModelNoMemory, model,nn.PNLLCriterion(),
+        dataset, opt, optim.sgd) then
+        return "...OK!"
+    end
+    return "...fail!"
+
+end
+
+
+
+
+
+--------------------------------------------------------------------------------
 -- Perform gradient checking on custom criterion
 --------------------------------------------------------------------------------
 trainingTests["criterionChecker"] = function()
@@ -216,4 +270,5 @@ function gradient_check(h, e, criterion, input, target)
 
     return true
 end
+
 

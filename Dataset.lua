@@ -99,8 +99,6 @@ function Dataset.create(opt)
         testSet, _ = Dataset.__genRepeatOnce(self. testSize,
             self.vectorSize, self.minVal, self.maxVal, trainNumbers,
             self.memorySize)
-
-
     else
         print("Dataset type " .. opt.dataset_type .. "Not implemented yet!")
         os.exit()
@@ -141,7 +139,7 @@ function Dataset.__genRepeatOnce(
         outputMemory[2] = template:clone()
         labels[i] = outputMemory
     end
-    return {input, labels}, inputOriginal
+    return {inputs, labels}, inputOriginal
 
 end
 
