@@ -12,7 +12,7 @@ local Model = {}
 -- Creates model, may use external input besides
 --------------------------------------------------------------------------------
 function Model.create(opt)
-    if opt.noInput ~= nil then
+    if opt.noInput == true then
         return Model.__createNoInput(opt)
     end
     return Model.__createWithInput(opt)
@@ -182,7 +182,7 @@ function Model.__createNoInput(opt)
 
     ----memory update
     local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
-    local finMem = nn.CAddTable()({memEraser, adder})
+    local finMem = nn.Sigmoid()(nn.CAddTable()({memEraser, adder}))
     ------------------------------------------------------------------------------
 
 

@@ -26,8 +26,10 @@ cmd:text('Options')
 cmd:option('-trainFile','train.t7', 'filename of the training set')
 cmd:option('-testFile', 'test.t7', 'filename of the test set')
 cmd:option('-batchSize', '16', 'number of sequences to train in parallel')
-cmd:option('-memSize', '20', 'number of entries in linear memory')
+cmd:option('-memorySize', '20', 'number of entries in linear memory')
 cmd:option('-useCuda', false, 'Should model use cuda')
+cmd:option('-noInput', true, 'Architecture used implies separate input')
+cmd:option('-maxForwardSteps', '10', 'maximum forward steps model makes')
 cmd:text()
 
 local opt = cmd:parse(arg)
@@ -65,6 +67,17 @@ runUnitTestSuite(dataTests)
 print("Running training tests...")
 runUnitTestSuite(trainingTests)
 
+--------------------------------------------------------------------------------
+-- Train on repeat-once dataset
+--------------------------------------------------------------------------------
 
+local dataset = torch.load(opt.trainFile)
+setmetatable(dataset, Dataset)
+
+opt.vectorSize = dataset.vectorSize
+opt.inputSize = dataset.inputSize
+
+local model = Model.create(opt)
+trainModelNoMemory(model,nn.PNLLCriterion(), dataset, opt, optim.sgd)
 
 

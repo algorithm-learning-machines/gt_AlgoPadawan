@@ -3,6 +3,8 @@
 -- Custom optimizing procedures
 --------------------------------------------------------------------------------
 
+require 'gnuplot'
+
 
 --------------------------------------------------------------------------------
 -- Dummy Criterion for prototyping
@@ -325,11 +327,14 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
 
     batch = dataset:getNextBatch(batchSize)
     local batchNum = 1
+    local errors = {}
+    
     ----------------------------------------------------------------------------
     -- Training loop
     ----------------------------------------------------------------------------
     while batch ~= nil do
         batchNum = batchNum + 1
+        local timer = torch.Timer()
         ------------------------------------------------------------------------
         -- Create mini batches
         ------------------------------------------------------------------------
@@ -346,6 +351,7 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
         ------------------------------------------------------------------------
         -- Create closure to evaluate f(X) and df/dX
         ------------------------------------------------------------------------
+        
         local feval = function(x)
             -- get new parameters
             if x ~= parameters then
@@ -379,18 +385,20 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                     local output = clones[numIterations]:forward(
                         cloneInputs[numIterations])
 
-
+                    local prob_val = output[2][1]
                     cloneOutputs[numIterations] = output -- needed for Criterion
                     numIterations = numIterations + 1
                     ------------------------------------------------------------
                     -- Remember models and their respective inputs
                     ------------------------------------------------------------
-
                     clones[numIterations] = cloneModel(model) -- clone model
 
                     -- needed for backprop
                     memory = output[1]
                     inputsIndex = inputsIndex + 1
+                    if (prob_val > 0.9) then
+                        terminated = true
+                    end
                 end
 
                 ----------------------------------------------------------------
@@ -438,18 +446,28 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
             -- normalize gradients and f(X)
             gradParameters:div(#inputs)
             f = f/#inputs
+            errors[#errors + 1]  = f
+            --------------------------------------------------------------------
+            -- Intermediary plot
+            --------------------------------------------------------------------
+            gnuplot.plot(torch.Tensor(errors))
 
             -- return f and df/dX
             return f,gradParameters
         end
-
         -- optimize on current mini-batch
         if optimMethod == optim.asgd then
             _,_,average = optimMethod(feval, parameters, optimState)
         else
             optimMethod(feval, parameters, optimState)
         end
+        print("time to process batch.."..timer:time().real..' seconds')
+        timer:reset()
     end
+    ----------------------------------------------------------------------------
+    -- Plot errors for reference
+    ---------------------------------------------------------------------------
+    gnuplot.plot(torch.Tensor(errors))
 end
 
 
