@@ -12,7 +12,7 @@ An implementation of an architecture capable of learning algorithms
 
 ##File Description:##
 ###main.lua###
-Main entry point of application
+Main entry point of application. Should run GenerateDataset script first.
 ###Dataset.lua###
 Dataset specific classes and functions
 ###DataUnitTests.lua###
