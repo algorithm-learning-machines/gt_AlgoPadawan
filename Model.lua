@@ -1,8 +1,7 @@
 --------------------------------------------------------------------------------
 -- File containing model definition
 --------------------------------------------------------------------------------
-require "rnn"
-require "nngraph"
+require "rnn" require "nngraph"
 --require "cutorch"
 --require "cunn"
 local Model = {}
@@ -144,29 +143,29 @@ function Model.__createNoInput(opt)
     --return nn.gModule({initialMem}, {addressTransp})
 
     local value = nn.MM()({addressTransp, initialMem})
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
 
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
     ---- Next address calculator
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
     local reshapedValue = nn.Squeeze(1)(value)
     local valAddr = nn.JoinTable(1)({address, reshapedValue})
     local addrCalc =
         nn.GRU(memSize + vectorSize, memSize)(valAddr)
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
 
 
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
     ---- Next value calculator
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
     local valueCalc =
         nn.GRU(memSize + vectorSize, vectorSize)(valAddr)
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
 
 
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
     ---- Memory Calculator
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
 
     ----adder
     local resizeValueCalc = nn.Reshape(1, vectorSize)(valueCalc)
@@ -183,12 +182,12 @@ function Model.__createNoInput(opt)
     ----memory update
     local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
     local finMem = nn.Sigmoid()(nn.CAddTable()({memEraser, adder}))
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
 
 
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
     ---- Probability calculator
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
     local addrValCalc = nn.JoinTable(1)({addrCalc, valueCalc})
     local allInOne = nn.JoinTable(1)({addrValCalc, reshapedMem})
     local h1 = nn.Linear(vectorSize + memSize + memSize * vectorSize, 10)
@@ -196,12 +195,38 @@ function Model.__createNoInput(opt)
 
     local p = nn.Sigmoid()(nn.Linear(10, 1)(nn.Sigmoid()(nn.Linear(10, 10)(
         nn.Sigmoid()(h1)))))
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
 
     return nn.gModule({initialMem}, {finMem, p})
 
 end
 
+--------------------------------------------------------------------------------
+-- Save model to file
+-- Specify overWrite = true if you wish to overwrite an existent file
+--------------------------------------------------------------------------------
+function Model.saveModel(model, fileName, overWrite)
+    if (path.exists(fileName) and overWrite == false) then
+        print("file "..fileName.." already exists, overWrite option \
+            not specified. aborting.")
+        return false
+    end
+    torch.save(fileName, model)
+    return true
+end
+
+--------------------------------------------------------------------------------
+-- Load a model from a file
+--------------------------------------------------------------------------------
+function Model.loadModel(fileName)
+    if not path.exists(fileName) then
+        print("file "..fileName.." does not exist. Create it first before \
+            loading something from it")
+        return nil
+    end
+    model = torch.load(fileName)
+    return model
+end
 
 
 return Model

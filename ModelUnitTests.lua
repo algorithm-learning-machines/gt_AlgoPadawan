@@ -57,10 +57,6 @@ modelTests["inputAndMemory"] = function()
     cmd:text()
     opt = cmd:parse(arg)
 
-    ----------------------------------------------------------------------------
-    -- Run sanity check on size
-    ----------------------------------------------------------------------------
-
     setmetatable(dataset, Dataset)
     dataset:resetBatchIndex()
 
@@ -82,7 +78,9 @@ modelTests["inputAndMemory"] = function()
 
 end
 
-
+--------------------------------------------------------------------------------
+-- Test that model involving only memory works correctly
+--------------------------------------------------------------------------------
 modelTests["memory"] = function()
     ----------------------------------------------------------------------------
     -- Dummy dataset
@@ -119,9 +117,6 @@ modelTests["memory"] = function()
     cmd:text()
     opt = cmd:parse(arg)
 
-    ----------------------------------------------------------------------------
-    -- Run sanity check on size
-    ----------------------------------------------------------------------------
 
     setmetatable(dataset, Dataset)
     dataset:resetBatchIndex()
@@ -144,3 +139,79 @@ modelTests["memory"] = function()
 
 end
 --------------------------------------------------------------------------------
+
+
+modelTests["saveAndLoad"] = function()
+----------------------------------------------------------------------------
+    -- Dummy dataset
+    ----------------------------------------------------------------------------
+    local cmd = torch.CmdLine()
+    cmd:text()
+    cmd:text('Generate datasets for learning algorithms')
+    cmd:text()
+    cmd:text('Options')
+    cmd:option('-dataFile','train.t7', 'filename of the training set')
+    cmd:option('-vectorSize', 5, 'size of single training instance vector')
+    cmd:option('-trainSize', 80, 'size of training set')
+    cmd:option('-testSize', 50, 'size of test set')
+    cmd:option('-datasetType', 'repeat_binary', 'dataset type')
+    cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
+    cmd:option('-maxVal', 300, 'maximum scalar value of dataset instances')
+    cmd:option('-memorySize', 500, 'number of entries in memory')
+    cmd:text()
+
+    local opt = cmd:parse(arg)
+
+    dataset = Dataset.create(opt)
+    ----------------------------------------------------------------------------
+    -- Dummy command line options
+    ----------------------------------------------------------------------------
+    cmd = torch.CmdLine()
+    cmd:text()
+    cmd:text('Training a neural architecture to learn algorithms')
+    cmd:text()
+    cmd:text('Options')
+    cmd:option('-trainFile','train.t7', 'filename of the training set')
+    cmd:option('-testFile', 'test.t7', 'filename of the test set')
+    cmd:option('-batchSize', '16', 'number of sequences to train in parallel')
+    cmd:text()
+    opt = cmd:parse(arg)
+
+    setmetatable(dataset, Dataset)
+    dataset:resetBatchIndex()
+
+    opt.vectorSize = dataset.vectorSize
+    opt.memorySize = dataset.memorySize
+    opt.inputSize = dataset.inputSize
+    opt.noInput = true
+    m = Model.create(opt)
+    local res = "...OK!"
+    local ret = Model.saveModel(m, "dummyFile", false)
+    if ret ~= true then
+        print("fail 1")
+        res = "...fail!"
+    end
+    ret = Model.saveModel(m, "dummyFile", false)
+    if ret ~= false then
+        print("fail 2")
+        res = "...fail!"
+
+        --return "...fail!"
+    end
+    m = Model.loadModel("dummyFile")
+    if m == nil then
+        print("fail 3")
+        res = "...fail!"
+    end
+    print(m:forward(torch.zeros(tonumber(opt.memorySize),
+        tonumber(opt.vectorSize))))
+    -- TODO would like this pcall to work!
+    --if not pcall(m:forward, dataset.trainSet[1]) then
+         --res = "...fail!"
+    --end
+
+    os.execute("rm dummyFile")
+    return res
+
+
+end
