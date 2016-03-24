@@ -30,6 +30,8 @@ cmd:option('-memorySize', '20', 'number of entries in linear memory')
 cmd:option('-useCuda', false, 'Should model use cuda')
 cmd:option('-noInput', true, 'Architecture used implies separate input')
 cmd:option('-maxForwardSteps', '10', 'maximum forward steps model makes')
+cmd:option('-saveEvery', 1, 'save model to file in training after this num')
+cmd:option('-saveFile', "autosave.model", 'file to save model in ')
 cmd:text()
 
 local opt = cmd:parse(arg)
@@ -50,6 +52,7 @@ require 'TrainingUnitTests'
 Dataset = require("Dataset")
 Model = require("Model")
 require "Training"
+require "Evaluation"
 
 --------------------------------------------------------------------------------
 -- Run unit Tests
@@ -64,8 +67,8 @@ print("Running model tests...")
 runUnitTestSuite(modelTests)
 print("Running data tests...")
 runUnitTestSuite(dataTests)
-print("Running training tests...")
-runUnitTestSuite(trainingTests)
+--print("Running training tests...")
+--runUnitTestSuite(trainingTests)
 
 --------------------------------------------------------------------------------
 -- Train on repeat-once dataset
@@ -78,6 +81,11 @@ opt.vectorSize = dataset.vectorSize
 opt.inputSize = dataset.inputSize
 
 local model = Model.create(opt)
+--TODO hack, should integrate this in model somewhere
+model.maxForwardSteps = 5
 trainModelNoMemory(model,nn.PNLLCriterion(), dataset, opt, optim.sgd)
+--model = torch.load("autosave.model")
+--print(model)
+evalModelOnDataset(model, dataset, nn.PNLLCriterion())
 
 

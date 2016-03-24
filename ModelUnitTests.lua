@@ -185,6 +185,7 @@ modelTests["saveAndLoad"] = function()
     opt.inputSize = dataset.inputSize
     opt.noInput = true
     m = Model.create(opt)
+    os.execute("rm dummyFile")
     local res = "...OK!"
     local ret = Model.saveModel(m, "dummyFile", false)
     if ret ~= true then
@@ -203,8 +204,7 @@ modelTests["saveAndLoad"] = function()
         print("fail 3")
         res = "...fail!"
     end
-    print(m:forward(torch.zeros(tonumber(opt.memorySize),
-        tonumber(opt.vectorSize))))
+    m:forward(torch.zeros(tonumber(opt.memorySize), tonumber(opt.vectorSize)))
     -- TODO would like this pcall to work!
     --if not pcall(m:forward, dataset.trainSet[1]) then
          --res = "...fail!"

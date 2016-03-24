@@ -2,7 +2,6 @@
 -- File containing Training definitions, for example Criterions,
 -- Custom optimizing procedures
 --------------------------------------------------------------------------------
-
 require 'gnuplot'
 
 
@@ -320,6 +319,7 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
     local memSize = tonumber(opt.memorySize)
     local batchSize = tonumber(opt.batchSize)
     local maxForwardSteps = tonumber(opt.maxForwardSteps)
+    local saveEvery = tonumber(opt.saveEvery)
     ----------------------------------------------------------------------------
     -- Work in batches
     ----------------------------------------------------------------------------
@@ -328,11 +328,12 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
     batch = dataset:getNextBatch(batchSize)
     local batchNum = 1
     local errors = {}
-    
+    local learnIterations = 0
     ----------------------------------------------------------------------------
     -- Training loop
     ----------------------------------------------------------------------------
     while batch ~= nil do
+        learnIterations = learnIterations + 1
         batchNum = batchNum + 1
         local timer = torch.Timer()
         ------------------------------------------------------------------------
@@ -351,7 +352,6 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
         ------------------------------------------------------------------------
         -- Create closure to evaluate f(X) and df/dX
         ------------------------------------------------------------------------
-        
         local feval = function(x)
             -- get new parameters
             if x ~= parameters then
@@ -439,6 +439,10 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
 
                     err = err + currentErr
                 end
+                -- Temporary checker
+                local _,dparams = clones[1]:getParameters()
+                print("Size of clone gradients:")
+                print(dparams:size())
                 f = f + err
                 collectgarbage()
             end
@@ -447,7 +451,7 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
             gradParameters:div(#inputs)
             f = f/#inputs
             errors[#errors + 1]  = f
-            --------------------------------------------------------------------
+                        --------------------------------------------------------------------
             -- Intermediary plot
             --------------------------------------------------------------------
             gnuplot.plot(torch.Tensor(errors))
@@ -463,6 +467,18 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
         end
         print("time to process batch.."..timer:time().real..' seconds')
         timer:reset()
+        ------------------------------------------------------------------------
+        -- Save model to file
+        ------------------------------------------------------------------------
+        if saveEvery ~= nil and learnIterations % saveEvery == 0 then
+            local ret = Model.saveModel(opt.saveFile)
+            if ret ~= true then
+                print("Model saving could not be finalized")
+                error({code=121})
+            else
+                print("Model has been saved to "..opt.saveFile)
+            end
+        end
     end
     ----------------------------------------------------------------------------
     -- Plot errors for reference

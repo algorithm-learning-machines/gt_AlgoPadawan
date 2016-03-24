@@ -206,12 +206,16 @@ end
 -- Specify overWrite = true if you wish to overwrite an existent file
 --------------------------------------------------------------------------------
 function Model.saveModel(model, fileName, overWrite)
+    --TODO remove hardcoding
+    if fileName == nil then
+        fileName = "autosave.model"
+    end
     if (path.exists(fileName) and overWrite == false) then
-        print("file "..fileName.." already exists, overWrite option \
-            not specified. aborting.")
+        print("file "..fileName.." already exists, overWrite option not specified. aborting.")
         return false
     end
     torch.save(fileName, model)
+    print("Saved model!")
     return true
 end
 
@@ -220,8 +224,7 @@ end
 --------------------------------------------------------------------------------
 function Model.loadModel(fileName)
     if not path.exists(fileName) then
-        print("file "..fileName.." does not exist. Create it first before \
-            loading something from it")
+        print("file "..fileName.." does not exist. Create it first before loading something from it")
         return nil
     end
     model = torch.load(fileName)
