@@ -82,10 +82,9 @@ opt.inputSize = dataset.inputSize
 
 local model = Model.create(opt)
 --TODO hack, should integrate this in model somewhere
-model.maxForwardSteps = 5
+--model.maxForwardSteps = 15
 trainModelNoMemory(model,nn.PNLLCriterion(), dataset, opt, optim.sgd)
 --model = torch.load("autosave.model")
---print(model)
 evalModelOnDataset(model, dataset, nn.PNLLCriterion())
 
 

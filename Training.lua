@@ -399,7 +399,8 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                         terminated = true
                     end
                 end
-                                --smallTimer:reset()
+                print("Probability to terminate: "..cloneOutputs[#cloneOutputs - 1][2][1])
+
 
                 ----------------------------------------------------------------
                 -- Propagate gradients from front to back; cumulate gradients
@@ -474,10 +475,7 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                 print("Model has been saved to "..opt.saveFile)
             end
         end
-        if errors[#errors] < 3.0 then
-            break
-        end
-        print(errors[#errors])
+        print("error "..errors[#errors])
     end
     ----------------------------------------------------------------------------
     -- Plot errors for reference
