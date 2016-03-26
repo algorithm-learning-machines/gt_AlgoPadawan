@@ -30,6 +30,11 @@ function evalModelOnDataset(model, dataset, criterion)
             numIterations = numIterations + 1
             finalOutput = output
         end
+        print("final output")
+        print(finalOutput[1])
+        print("label")
+        print(labels[i])
+
         err = criterion:forward(finalOutput, labels[i])
         errAvg = errAvg + err
     end

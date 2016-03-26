@@ -24,6 +24,7 @@ function Model.__createWithInput(opt)
     local vectorSize = tonumber(opt.vectorSize)
     local memSize = tonumber(opt.memorySize)
     local inputSize = tonumber(opt.inputSize)
+    local RNN_steps = 5 --TODO add command line param
 
     ----------------------------------------------------------------------------
     --  Initial Memory
@@ -42,7 +43,7 @@ function Model.__createWithInput(opt)
     --  Address Encoder
     ----------------------------------------------------------------------------
     local reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
-    local enc = nn.GRU(memSize * vectorSize, memSize)(reshapedMem)
+    local enc = nn.GRU(memSize * vectorSize, memSize, RNN_steps)(reshapedMem)
     local address = nn.SoftMax()(enc)
     ----------------------------------------------------------------------------
 
@@ -62,7 +63,8 @@ function Model.__createWithInput(opt)
     local inputVal = nn.JoinTable(1)({input, address})
     local inputValAddr = nn.JoinTable(1)({inputVal, reshapedValue})
     local addrCalc =
-        nn.GRU(inputSize + memSize + vectorSize, memSize)(inputValAddr)
+        nn.GRU(inputSize + memSize + vectorSize, memSize, RNN_steps)
+            (inputValAddr)
     ----------------------------------------------------------------------------
 
 
@@ -70,7 +72,8 @@ function Model.__createWithInput(opt)
     -- Next value calculator
     ----------------------------------------------------------------------------
     local valueCalc =
-        nn.GRU(inputSize + memSize + vectorSize, vectorSize)(inputValAddr)
+        nn.GRU(inputSize + memSize + vectorSize, vectorSize, RNN_steps)
+            (inputValAddr)
     ----------------------------------------------------------------------------
 
     ----------------------------------------------------------------------------
@@ -118,7 +121,7 @@ end
 function Model.__createNoInput(opt)
     local vectorSize = tonumber(opt.vectorSize)
     local memSize = tonumber(opt.memorySize)
-
+    local RNN_size = 5 -- TODO add command line param
     ----------------------------------------------------------------------------
     --  Initial Memory
     ----------------------------------------------------------------------------
@@ -130,7 +133,7 @@ function Model.__createNoInput(opt)
     --  Address Encoder
     ----------------------------------------------------------------------------
     local reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
-    local enc = nn.GRU(memSize * vectorSize, memSize)(reshapedMem)
+    local enc = nn.GRU(memSize * vectorSize, memSize, RNN_size)(reshapedMem)
     local address = nn.SoftMax()(enc)
     ----------------------------------------------------------------------------
 
@@ -151,7 +154,7 @@ function Model.__createNoInput(opt)
     local reshapedValue = nn.Squeeze(1)(value)
     local valAddr = nn.JoinTable(1)({address, reshapedValue})
     local addrCalc =
-        nn.GRU(memSize + vectorSize, memSize)(valAddr)
+        nn.GRU(memSize + vectorSize, memSize, RNN_size)(valAddr)
     ----------------------------------------------------------------------------
 
 
@@ -159,7 +162,7 @@ function Model.__createNoInput(opt)
     ---- Next value calculator
     ----------------------------------------------------------------------------
     local valueCalc =
-        nn.GRU(memSize + vectorSize, vectorSize)(valAddr)
+        nn.GRU(memSize + vectorSize, vectorSize, RNN_size)(valAddr)
     ----------------------------------------------------------------------------
 
 

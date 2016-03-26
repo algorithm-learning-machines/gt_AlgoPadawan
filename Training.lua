@@ -111,7 +111,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
     ----------------------------------------------------------------------------
     -- Work in batches
     ----------------------------------------------------------------------------
-    model:training() -- set model in training mode
+    --model:training() -- set model in training mode
 
     batch = dataset:getNextBatch(batchSize)
     local batchNum = 1
@@ -119,6 +119,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
     -- Training loop
     ----------------------------------------------------------------------------
     while batch ~= nil do
+        --gradParameters:zero()
         batchNum = batchNum + 1
         ------------------------------------------------------------------------
         -- Create mini batches
@@ -247,6 +248,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
         else
             optimMethod(feval, parameters, optimState)
         end
+        collectgarbage()
     end
 end
 
@@ -263,12 +265,10 @@ function cloneModel(model)
             params = {}
         end
     end
-
     local paramsNoGrad
     if model.parametersNoGrad then
         paramsNoGrad = model:parametersNoGrad()
     end
-
     local mem = torch.MemoryFile("w"):binary()
     mem:writeObject(model)
 
@@ -280,20 +280,19 @@ function cloneModel(model)
         local cloneParams, cloneGradParams = clone:parameters()
         local cloneParamsNoGrad
         for i = 1, #params do
-            -- Sets reference to model's parameters
+             --Sets reference to model's parameters
              cloneParams[i]:set(params[i])
              cloneGradParams[i]:set(gradParams[i])
 
-        end
+       end
         if paramsNoGrad then
             cloneParamsNoGrad = clone:parametersNoGrad()
             for i =1,#paramsNoGrad do
-                -- Sets reference to model's parameters
+                ---- Sets reference to model's parameters
                 cloneParamsNoGrad[i]:set(paramsNoGrad[i])
             end
         end
     end
-
     collectgarbage()
     mem:close()
     return clone
@@ -323,7 +322,7 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
     ----------------------------------------------------------------------------
     -- Work in batches
     ----------------------------------------------------------------------------
-    model:training() -- set model in training mode
+    --model:training() -- set model in training mode
 
     batch = dataset:getNextBatch(batchSize)
     local batchNum = 1
@@ -381,7 +380,6 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                 local inputsIndex = 1 -- current input index;
                 while (not terminated) and numIterations < maxForwardSteps do
                     cloneInputs[numIterations] = memory
-
                     local output = clones[numIterations]:forward(
                         cloneInputs[numIterations])
 
@@ -391,6 +389,7 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Remember models and their respective inputs
                     ------------------------------------------------------------
+
                     clones[numIterations] = cloneModel(model) -- clone model
 
                     -- needed for backprop
@@ -400,11 +399,11 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                         terminated = true
                     end
                 end
+                                --smallTimer:reset()
 
                 ----------------------------------------------------------------
                 -- Propagate gradients from front to back; cumulate gradients
                 ----------------------------------------------------------------
-
                 local err = 0
                 for j=#clones - 1,0,-1 do
 
@@ -440,9 +439,6 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                     err = err + currentErr
                 end
                 -- Temporary checker
-                local _,dparams = clones[1]:getParameters()
-                print("Size of clone gradients:")
-                print(dparams:size())
                 f = f + err
                 collectgarbage()
             end
@@ -451,11 +447,10 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
             gradParameters:div(#inputs)
             f = f/#inputs
             errors[#errors + 1]  = f
-                        --------------------------------------------------------------------
+            --------------------------------------------------------------------
             -- Intermediary plot
             --------------------------------------------------------------------
             gnuplot.plot(torch.Tensor(errors))
-
             -- return f and df/dX
             return f,gradParameters
         end
@@ -479,6 +474,10 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                 print("Model has been saved to "..opt.saveFile)
             end
         end
+        if errors[#errors] < 3.0 then
+            break
+        end
+        print(errors[#errors])
     end
     ----------------------------------------------------------------------------
     -- Plot errors for reference
