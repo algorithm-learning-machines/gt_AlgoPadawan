@@ -162,6 +162,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 local clones = {}
                 local cloneInputs = {}
                 local cloneOutputs = {}
+                local probabilities = {}
                 clones[0] = model
                 local inputsIndex = 1 -- current input index;
                 while (not terminated) and numIterations < maxForwardSteps do
@@ -178,6 +179,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
 
                     cloneOutputs[numIterations] = output -- needed for Criterion
+                    probabilitties[numIterations] = output[2]
+                    print(probabilities[numIterations])
                     numIterations = numIterations + 1
 
                     ------------------------------------------------------------
@@ -376,6 +379,7 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                 local clones = {}
                 local cloneInputs = {}
                 local cloneOutputs = {}
+                local probabilities = {}
                 clones[0] = model
                 local inputsIndex = 1 -- current input index;
                 while (not terminated) and numIterations < maxForwardSteps do
@@ -385,13 +389,17 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
 
                     local prob_val = output[2][1]
                     cloneOutputs[numIterations] = output -- needed for Criterion
-                    numIterations = numIterations + 1
+                    probabilities[numIterations] = output[2][1]
+                    for k = 0, numIterations - 1 do
+                        probabilities[numIterations] = probabilities[numIterations] *
+                            (1 - cloneOutputs[k][2][1])
+                    end
+                                        numIterations = numIterations + 1
                     ------------------------------------------------------------
                     -- Remember models and their respective inputs
                     ------------------------------------------------------------
 
                     clones[numIterations] = cloneModel(model) -- clone model
-
                     -- needed for backprop
                     memory = output[1]
                     inputsIndex = inputsIndex + 1
@@ -399,8 +407,13 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                         terminated = true
                     end
                 end
-                print("Probability to terminate: "..cloneOutputs[#cloneOutputs - 1][2][1])
-
+                print("Probability to terminate: "..
+                    cloneOutputs[#cloneOutputs - 1][2][1])
+                local acc = 1
+                for k = 0, #clones - 2 do
+                    acc = acc - probabilities[k]
+                end
+                probabilities[#clones - 1] = acc
 
                 ----------------------------------------------------------------
                 -- Propagate gradients from front to back; cumulate gradients
@@ -409,6 +422,7 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                 for j=#clones - 1,0,-1 do
 
                     local currentOutput = cloneOutputs[j]
+                    currentOutput[2] = torch.Tensor{probabilities[j]}
                     if opt.targetIndex ~= nil then
                         local ix = tonumber(opt.targetIndex)
                         currentOutput[1] =
@@ -433,7 +447,7 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                     -- Output derivatives
                     ------------------------------------------------------------
                     currentDf_do[2] = Tensor{currentDf_do[2]}
-
+                    --currentDf_do[2] = Tensor{p_t}
                     clones[j]:backward(cloneInputs[i],
                         currentDf_do)
 

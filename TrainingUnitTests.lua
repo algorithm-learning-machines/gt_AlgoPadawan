@@ -16,7 +16,7 @@ trainingTests = {}
 trainingTests["TrainOnRepeaterCheck"] = function()
     Dataset = require("Dataset")
     Model = require("Model")
-    require "Training"
+    require "Train"
 
     ----------------------------------------------------------------------------
     -- Dummy command line options
@@ -85,7 +85,7 @@ end
 trainingTests["TrainOnBinaryAdditionCheck"] = function()
     Dataset = require("Dataset")
     Model = require("Model")
-    require "Training"
+    require "Train"
 
     ----------------------------------------------------------------------------
     -- Dummy command line options
@@ -137,7 +137,7 @@ end
 trainingTests["TrainOnRepeatOnceCheck"] = function()
     Dataset = require("Dataset")
     Model = require("Model")
-    require "Training"
+    require "Train"
 
     ----------------------------------------------------------------------------
     -- Dummy command line options
@@ -192,7 +192,7 @@ trainingTests["criterionChecker"] = function()
     Dataset = require("Dataset")
     Model = require("Model")
 
-    require "Training"
+    require "Train"
     local criterion = nn.PNLLCriterion()
     i = {}
     i[1] = torch.Tensor(10):fill(0.4)

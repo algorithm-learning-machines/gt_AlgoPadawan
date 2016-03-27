@@ -51,7 +51,7 @@ require 'DataUnitTests'
 require 'TrainingUnitTests'
 Dataset = require("Dataset")
 Model = require("Model")
-require "Training"
+require "Train"
 require "Evaluation"
 
 --------------------------------------------------------------------------------
