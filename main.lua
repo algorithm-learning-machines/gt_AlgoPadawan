@@ -32,6 +32,9 @@ cmd:option('-noInput', true, 'Architecture used implies separate input')
 cmd:option('-maxForwardSteps', '10', 'maximum forward steps model makes')
 cmd:option('-saveEvery', 1, 'save model to file in training after this num')
 cmd:option('-saveFile', "autosave.model", 'file to save model in ')
+cmd:option('-probabilityDiscount', "0.99", 'probability discount paralel \
+    criterion')
+cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:text()
 
 local opt = cmd:parse(arg)
@@ -81,10 +84,12 @@ opt.vectorSize = dataset.vectorSize
 opt.inputSize = dataset.inputSize
 
 local model = Model.create(opt)
---TODO hack, should integrate this in model somewhere
---model.maxForwardSteps = 15
-trainModelNoMemory(model,nn.PNLLCriterion(), dataset, opt, optim.sgd)
---model = torch.load("autosave.model")
+local pnll = nn.PNLLCriterion()
+local prob_mse = nn.MSECriterion()
+local dis = tonumber(opt.probabilityDiscount)
+local paralelCriterion = nn.ParallelCriterion():add(prob_mse, dis):
+    add(pnll, 1 - dis)
+trainModelOnlyMem(model,paralelCriterion, dataset, opt, optim.sgd)
 evalModelOnDataset(model, dataset, nn.PNLLCriterion())
 
 

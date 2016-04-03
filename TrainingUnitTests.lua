@@ -62,7 +62,7 @@ trainingTests["TrainOnRepeaterCheck"] = function()
     opt.vectorSize = dataset.vectorSize
     opt.memorySize = dataset.memorySize
     opt.inputSize = dataset.inputSize
-
+    opt.memOnly = false
 
     model = Model.create(opt)
 
@@ -70,7 +70,7 @@ trainingTests["TrainOnRepeaterCheck"] = function()
     --getting past this point means basic layout of training procedure
     --makes sense
     --trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
-    if pcall(trainModel, model,nn.PNLLCriterion(),
+    if pcall(trainModelOnlyMem, model,nn.PNLLCriterion(),
         dataset, opt, optim.sgd) then
         return "...OK!"
     end
@@ -112,7 +112,7 @@ trainingTests["TrainOnBinaryAdditionCheck"] = function()
     dataset:resetBatchIndex()
 
     local cmd = torch.Cmd
-
+    opt.memOnly = false
     opt.vectorSize = dataset.vectorSize
     opt.memorySize = dataset.memorySize
     opt.inputSize = dataset.inputSize
@@ -123,7 +123,7 @@ trainingTests["TrainOnBinaryAdditionCheck"] = function()
     --getting past this point means basic layout of training procedure
     --makes sense
     --trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
-    if pcall(trainModel, model,nn.PNLLCriterion(),
+    if pcall(trainModelMemOnly, model,nn.PNLLCriterion(),
         dataset, opt, optim.sgd) then
         return "...OK!"
     end
@@ -162,7 +162,7 @@ trainingTests["TrainOnRepeatOnceCheck"] = function()
     local opt = cmd:parse(arg)
     dataset = Dataset.create(opt)
     dataset:resetBatchIndex()
-
+    opt.memOnly = false
     opt.vectorSize = dataset.vectorSize
     opt.memorySize = dataset.memorySize
     opt.inputSize = dataset.inputSize
@@ -172,8 +172,8 @@ trainingTests["TrainOnRepeatOnceCheck"] = function()
     opt.batchSize = opt.trainSize
     --getting past this point means basic layout of training procedure
     --makes sense
-    --trainModelNoMemory(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
-    if pcall(trainModelNoMemory, model,nn.PNLLCriterion(),
+    --trainModelOnlyMem(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
+    if pcall(trainModelOnlyMem, model,nn.PNLLCriterion(),
         dataset, opt, optim.sgd) then
         return "...OK!"
     end
@@ -233,11 +233,6 @@ function gradient_check(h, e, criterion, input, target)
     for j=1,#input do
         local params = input[j]
         local dParams = df_do[j]
-        -- TODO remove hardcoding
-        -- hardcoded for testing
-        if j == 2 then
-            dParams = torch.Tensor{dParams}
-        end
 
         for i=1,params:size(1) do
             local e_i = torch.zeros(params:size())

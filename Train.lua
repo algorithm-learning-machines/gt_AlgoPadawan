@@ -27,15 +27,14 @@ end
 --------------------------------------------------------------------------------
 local PNLLCriterion, _ = torch.class('nn.PNLLCriterion',  'nn.Criterion')
 
---------------------------------------------------------------------------------
--- Returns loss function
---------------------------------------------------------------------------------
-function PNLLCriterion:forward(input, target)
+
+function PNLLCriterion:updateOutput(input, target)
     ----------------------------------------------------------------------------
     -- Extract info from parameters
     ----------------------------------------------------------------------------
     local prob = input[2][1]
-    return (-1) * prob * self:sumDifference(input, target)
+    self.output = (-1) * prob * self:sumDifference(input, target)
+    return self.output
 end
 
 
@@ -60,14 +59,11 @@ function PNLLCriterion:sumDifference(input, target)
 
 end
 
---------------------------------------------------------------------------------
--- Derivatives of relevant memory and probabiltiy
---------------------------------------------------------------------------------
-function PNLLCriterion:backward(input, target)
-    ----------------------------------------------------------------------------
+
+function PNLLCriterion:updateGradInput(input, target)
+  ----------------------------------------------------------------------------
     -- Extract info from parameters
     ----------------------------------------------------------------------------
-
     local memory = input[1]
     local memSize = memory:size()
     local prob = input[2][1]
@@ -84,9 +80,9 @@ function PNLLCriterion:backward(input, target)
     local denom = memory + target - torch.ones(memSize)
     dMemory:cdiv(denom)
     dMemory = dMemory * (-1)
-
-    self.gradInput = {dMemory, dProb}
+    self.gradInput = {dMemory, torch.Tensor{dProb}}
     return self.gradInput
+
 end
 
 
@@ -188,7 +184,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
 
                     clones[numIterations] = cloneModel(model) -- clone model
-                    local _, d = clones[numIterations]:getParameters()
 
                     -- needed for backprop
                     memory = output[1]
@@ -211,8 +206,13 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Find error and output gradients at this time step
                     ------------------------------------------------------------
-                    local currentErr = criterion:forward(currentOutput,
-                        targets[i])
+                    local prob_target = torch.Tensor{0}
+                    if j > 3 then
+                        prob_target = torch.Tensor{1}
+                    end
+                    local currentErr = criterion:forward({currentOutput[2],
+                        currentOutput},
+                    {prob_target, targets[i]})
                     local currentDf_do = criterion:backward(currentOutput,
                         targets[i])
 
@@ -311,7 +311,7 @@ end
 -- Heavily inspired from torch tutorials on https://github.com/torch/tutorials/
 -- TODO Should merge this with memory model somehow, code is too similar
 --------------------------------------------------------------------------------
-function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
+function trainModelOnlyMem(model, criterion, dataset, opt, optimMethod)
 
     ----------------------------------------------------------------------------
     -- Extract info from parameters
@@ -370,6 +370,10 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
             for i = 1,#inputs do
                 -- estimate f
                 local memory = inputs[i]
+                if (not opt.memOnly == true) then
+                    memory = Tensor(memSize, vectorSize):fill(0)
+                end
+
                 ----------------------------------------------------------------
                 -- Forward until probability comes close to 1 or until max
                 -- number of forwards steps has been reached
@@ -379,42 +383,41 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                 local clones = {}
                 local cloneInputs = {}
                 local cloneOutputs = {}
-                local probabilities = {}
                 clones[0] = model
                 local inputsIndex = 1 -- current input index;
                 while (not terminated) and numIterations < maxForwardSteps do
-                    cloneInputs[numIterations] = memory
+                    local currentInput = nil
+                    if (not opt.memOnly == true) then
+                        if inputsIndex <= inputs[i]:size(1) then
+                            currentInput = inputs[i][inputsIndex]
+                        else
+                            currentInput = torch.zeros(inputs[i][1]:size())
+                        end
+                        cloneInputs[numIterations] = {memory, currentInput}
+                    else
+                        cloneInputs[numIterations] = memory
+                    end
                     local output = clones[numIterations]:forward(
                         cloneInputs[numIterations])
 
                     local prob_val = output[2][1]
+                    print(prob_val)
                     cloneOutputs[numIterations] = output -- needed for Criterion
-                    probabilities[numIterations] = output[2][1]
-                    for k = 0, numIterations - 1 do
-                        probabilities[numIterations] = probabilities[numIterations] *
-                            (1 - cloneOutputs[k][2][1])
-                    end
-                                        numIterations = numIterations + 1
+
+                    numIterations = numIterations + 1
                     ------------------------------------------------------------
                     -- Remember models and their respective inputs
                     ------------------------------------------------------------
 
                     clones[numIterations] = cloneModel(model) -- clone model
                     -- needed for backprop
+
                     memory = output[1]
                     inputsIndex = inputsIndex + 1
                     if (prob_val > 0.9) then
                         terminated = true
                     end
                 end
-                print("Probability to terminate: "..
-                    cloneOutputs[#cloneOutputs - 1][2][1])
-                local acc = 1
-                for k = 0, #clones - 2 do
-                    acc = acc - probabilities[k]
-                end
-                probabilities[#clones - 1] = acc
-
                 ----------------------------------------------------------------
                 -- Propagate gradients from front to back; cumulate gradients
                 ----------------------------------------------------------------
@@ -422,7 +425,6 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                 for j=#clones - 1,0,-1 do
 
                     local currentOutput = cloneOutputs[j]
-                    currentOutput[2] = torch.Tensor{probabilities[j]}
                     if opt.targetIndex ~= nil then
                         local ix = tonumber(opt.targetIndex)
                         currentOutput[1] =
@@ -431,10 +433,17 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Find error and output gradients at this time step
                     ------------------------------------------------------------
-                    local currentErr = criterion:forward(currentOutput,
-                        targets[i])
-                    local currentDf_do = criterion:backward(currentOutput,
-                        targets[i])
+                    local prob_target = torch.Tensor{0}
+                    if j > 1 then
+                        prob_target = torch.Tensor{1}
+                    end
+                    local currentErr = criterion:forward(
+                        {currentOutput[2]:clone(), currentOutput},
+                    {prob_target, targets[i]})
+
+                    local currentDf_do = criterion:backward(
+                        {currentOutput[2], currentOutput},
+                        {prob_target, targets[i]})
 
                     if opt.targetIndex ~= nil then
                         local memoryDev = torch.cat(currentDf_do[1]:reshape(1,
@@ -446,10 +455,9 @@ function trainModelNoMemory(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Output derivatives
                     ------------------------------------------------------------
-                    currentDf_do[2] = Tensor{currentDf_do[2]}
-                    --currentDf_do[2] = Tensor{p_t}
+                    currentDf_do[2][2]:add(currentDf_do[1])
                     clones[j]:backward(cloneInputs[i],
-                        currentDf_do)
+                        currentDf_do[2])
 
                     err = err + currentErr
                 end

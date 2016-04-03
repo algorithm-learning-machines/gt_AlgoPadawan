@@ -143,7 +143,6 @@ function Model.__createNoInput(opt)
     ----------------------------------------------------------------------------
     --TODO for current problems may not need to send value here
     local addressTransp = nn.Reshape(1, memSize)(address)
-    --return nn.gModule({initialMem}, {addressTransp})
 
     local value = nn.MM()({addressTransp, initialMem})
     ----------------------------------------------------------------------------
