@@ -24,7 +24,7 @@ cmd:text()
 cmd:text('Options')
 cmd:option('-dataFile','train.t7', 'filename of the training set')
 cmd:option('-vectorSize', 15, 'size of single training instance vector')
-cmd:option('-trainSize', 1000, 'size of training set')
+cmd:option('-trainSize', 3500, 'size of training set')
 cmd:option('-testSize', 30, 'size of test set')
 cmd:option('-datasetType', 'repeat_k', 'dataset type')
 cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
@@ -42,7 +42,6 @@ local opt = cmd:parse(arg)
 -- Generate and save data
 --------------------------------------------------------------------------------
 if (path.exists(opt.dataFile)) then
-
     print("file "..opt.dataFile.." already exists, please remove it first")
 else
     torch.save(opt.dataFile, Dataset.create(opt))

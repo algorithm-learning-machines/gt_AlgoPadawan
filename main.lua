@@ -100,8 +100,9 @@ end
 --local paralelCriterion = nn.ParallelCriterion():add(prob_mse, dis):
     --add(pnll, 1 - dis)
 local mse = nn.MSECriterion()
-trainModelNoInputOrProb(model, mse, dataset, opt, optim.adam)
+
+--trainModelNoInputOrProb(model, mse, dataset, opt, optim.adam)
 --trainModelOnlyMem(model,paralelCriterion, dataset, opt, optim.sgd)
-evalModelOnDatasetNoProb(model, dataset, mse)
+--evalModelOnDatasetNoProb(model, dataset, mse)
 
 

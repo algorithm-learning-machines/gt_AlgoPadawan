@@ -584,11 +584,8 @@ function trainModelNoInputOrProb(model, criterion, dataset, opt, optimMethod)
                 local memory = inputs[i]
                 local output = model:forward(memory)
                 local y_size, x_size = output:size(1), output:size(2)
-                --local n_output = output[{{1,2},{}}]
-                --print(n_output)
-                local currentErr = criterion:forward(output, targets[i])--[{{1,2},{}}])
-                local currentDf_do = criterion:backward(output, targets[i])--[{{1,2}, {}}])
-                --currentDf_do = torch.cat(currentDf_do, torch.zeros(y_size - 2, x_size), 1)
+                local currentErr = criterion:forward(output, targets[i])
+                local currentDf_do = criterion:backward(output, targets[i])
                 model:backward(inputs[i], currentDf_do)
 
                 -- Temporary checker

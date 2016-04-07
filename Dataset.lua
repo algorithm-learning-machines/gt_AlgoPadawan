@@ -43,6 +43,7 @@ end
 -- Dataset shape differs
 --------------------------------------------------------------------------------
 function Dataset.create(opt)
+
     self = {}
     setmetatable(self, Dataset)
 
@@ -99,6 +100,15 @@ function Dataset.create(opt)
         testSet, _ = Dataset.__genRepeatOnce(self. testSize,
             self.vectorSize, self.minVal, self.maxVal, trainNumbers,
             self.memorySize)
+    elseif opt.datasetType == "repeat_k" then
+        self.repetitions = tonumber(opt.repetitions)
+        self.inputSize = self.vectorSize
+        trainSet, trainNumbers = Dataset.__genRepeatK(
+        self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},
+        self.memorySize, self.repetitions)
+        testSet, _ = Dataset.__genRepeatOnce(self. testSize,
+            self.vectorSize, self.minVal, self.maxVal, trainNumbers,
+            self.memorySize, repetitions)
     else
         print("Dataset type " .. opt.dataset_type .. "Not implemented yet!")
         os.exit()
@@ -260,6 +270,53 @@ function Dataset.__genAdditionSet(setSize, vectorSize, minVal,
     return {input, target}, inputOriginal
 end
 
+function Dataset.__genRepeatK(setSize, vectorSize,
+    minVal, maxVal, exclusionSet, memorySize, repetitions)
+
+    --repetitions no of memories
+    local inputs = Tensor(setSize, memorySize, vectorSize)
+    local labels = Tensor(setSize, repetitions, memorySize, vectorSize)
+
+    local inputOriginal = {}
+    for i=1,setSize do
+        local template = Dataset.__numToBits(torch.random(minVal, maxVal),
+            vectorSize)
+
+        while (inputOriginal[tostring(template)] ~= nil) or
+            (exclusionSet[tostring(template)] ~= nil) do
+             template = Dataset.__numToBits(torch.random(minVal, maxVal),
+                vectorSize)
+        end
+
+        inputOriginal[tostring(template)] = template
+
+        for j=1,repetitions do
+            local outputRepeated = torch.repeatTensor(template:t(), j, 1)
+            local zeroed = nil
+            if j ~= memorySize then
+                zeroed = torch.repeatTensor(torch.zeros(1, vectorSize),
+                    memorySize - j, 1)
+            end
+
+            local outputMemory = nil
+            if zeroed ~= nil then
+                outputMemory = torch.cat(outputRepeated, zeroed, 1)
+            else
+                outputMemory = outputRepeated
+            end
+
+            labels[i][j] = outputMemory
+        end
+
+        local inputMemory = torch.repeatTensor(torch.zeros(1, vectorSize),
+            memorySize - 1, 1)
+        inputMemory = torch.cat(template:t(), inputMemory, 1)
+        inputs[i] = inputMemory
+
+    end
+    return {inputs, labels}, inputOriginal
+
+end
 
 
 --------------------------------------------------------------------------------
