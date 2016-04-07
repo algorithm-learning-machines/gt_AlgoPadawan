@@ -207,7 +207,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     -- Find error and output gradients at this time step
                     ------------------------------------------------------------
                     local prob_target = torch.Tensor{0}
-                    if j > 3 then
+                    if j > 1 then
                         prob_target = torch.Tensor{1}
                     end
                     local currentErr = criterion:forward({currentOutput[2],
@@ -309,7 +309,6 @@ end
 -- entry point of application
 -- Current state represents just a sketch of the final training procedure
 -- Heavily inspired from torch tutorials on https://github.com/torch/tutorials/
--- TODO Should merge this with memory model somehow, code is too similar
 --------------------------------------------------------------------------------
 function trainModelOnlyMem(model, criterion, dataset, opt, optimMethod)
 
@@ -430,8 +429,13 @@ function trainModelOnlyMem(model, criterion, dataset, opt, optimMethod)
                         currentOutput[1] =
                             currentOutput[1][{{1, ix}, {}}]:t():squeeze()
                     end
+
                     ------------------------------------------------------------
                     -- Find error and output gradients at this time step
+                    ------------------------------------------------------------
+
+                    ------------------------------------------------------------
+                    -- Target probability given to auxiliary MSE Criterion
                     ------------------------------------------------------------
                     local prob_target = torch.Tensor{0}
                     if j > 1 then
@@ -440,6 +444,7 @@ function trainModelOnlyMem(model, criterion, dataset, opt, optimMethod)
                     local currentErr = criterion:forward(
                         {currentOutput[2]:clone(), currentOutput},
                     {prob_target, targets[i]})
+                    ------------------------------------------------------------
 
                     local currentDf_do = criterion:backward(
                         {currentOutput[2], currentOutput},
@@ -455,7 +460,9 @@ function trainModelOnlyMem(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Output derivatives
                     ------------------------------------------------------------
+                    --add probability errors to initial criterion
                     currentDf_do[2][2]:add(currentDf_do[1])
+                    ------------------------------------------------------------
                     clones[j]:backward(cloneInputs[i],
                         currentDf_do[2])
 
@@ -505,6 +512,128 @@ function trainModelOnlyMem(model, criterion, dataset, opt, optimMethod)
     gnuplot.plot(torch.Tensor(errors))
 end
 
+
+--------------------------------------------------------------------------------
+-- function that trains a model on a dataset using a certain criterion and
+-- optimization method
+-- opt represents table with command line parameters received from main
+-- entry point of application
+-- Current state represents just a sketch of the final training procedure
+-- Heavily inspired from torch tutorials on https://github.com/torch/tutorials/
+--------------------------------------------------------------------------------
+function trainModelNoInputOrProb(model, criterion, dataset, opt, optimMethod)
+
+    ----------------------------------------------------------------------------
+    -- Extract info from parameters
+    ----------------------------------------------------------------------------
+    parameters, gradParameters = model:getParameters()
+    local vectorSize = tonumber(opt.vectorSize)
+    local memSize = tonumber(opt.memorySize)
+    local batchSize = tonumber(opt.batchSize)
+    local maxForwardSteps = tonumber(opt.maxForwardSteps)
+    local saveEvery = tonumber(opt.saveEvery)
+    ----------------------------------------------------------------------------
+    -- Work in batches
+    ----------------------------------------------------------------------------
+    model:training() -- set model in training mode
+    print(parameters)
+    batch = dataset:getNextBatch(batchSize)
+    local batchNum = 1
+    local errors = {}
+    local learnIterations = 0
+    ----------------------------------------------------------------------------
+    -- Training loop
+    ----------------------------------------------------------------------------
+    while batch ~= nil do
+        learnIterations = learnIterations + 1
+        batchNum = batchNum + 1
+        local timer = torch.Timer()
+        ------------------------------------------------------------------------
+        -- Create mini batches
+        ------------------------------------------------------------------------
+        local inputs = {}
+        local targets = {}
+        for i = 1, batchSize do
+            -- load new sample
+            local input = batch[1][i]
+            local target = batch[2][i]
+            table.insert(inputs, input)
+            table.insert(targets, target)
+        end
+        batch = dataset:getNextBatch(batchSize)
+        ------------------------------------------------------------------------
+        -- Create closure to evaluate f(X) and df/dX
+        ------------------------------------------------------------------------
+
+        --print(inputs[1])
+        local feval = function(x)
+            -- get new parameters
+            if x ~= parameters then
+                parameters:copy(x)
+            end
+
+            -- reset gradients
+            gradParameters:zero()
+
+            -- f is the average of all criterions
+            local f = 0
+
+            -- evaluate function for complete mini batch
+            for i = 1,#inputs do
+                -- estimate f
+                local memory = inputs[i]
+                local output = model:forward(memory)
+                local y_size, x_size = output:size(1), output:size(2)
+                --local n_output = output[{{1,2},{}}]
+                --print(n_output)
+                local currentErr = criterion:forward(output, targets[i])--[{{1,2},{}}])
+                local currentDf_do = criterion:backward(output, targets[i])--[{{1,2}, {}}])
+                --currentDf_do = torch.cat(currentDf_do, torch.zeros(y_size - 2, x_size), 1)
+                model:backward(inputs[i], currentDf_do)
+
+                -- Temporary checker
+                f = f + currentErr
+                collectgarbage()
+            end
+
+            -- normalize gradients and f(X)
+            gradParameters:div(#inputs)
+            f = f/#inputs
+            errors[#errors + 1]  = f
+            --------------------------------------------------------------------
+            -- Intermediary plot
+            --------------------------------------------------------------------
+            gnuplot.plot(torch.Tensor(errors))
+            -- return f and df/dX
+            return f, gradParameters
+        end
+        -- optimize on current mini-batch
+        if optimMethod == optim.asgd then
+            _,_,average = optimMethod(feval, parameters, optimState)
+        else
+            optimMethod(feval, parameters, optimState)
+        end
+        print("time to process batch.."..timer:time().real..' seconds')
+        timer:reset()
+        ------------------------------------------------------------------------
+        -- Save model to file
+        ------------------------------------------------------------------------
+        if saveEvery ~= nil and learnIterations % saveEvery == 0 then
+            local ret = Model.saveModel(opt.saveFile)
+            if ret ~= true then
+                print("Model saving could not be finalized")
+                error({code=121})
+            else
+                print("Model has been saved to "..opt.saveFile)
+            end
+        end
+        print("error "..errors[#errors])
+    end
+    ----------------------------------------------------------------------------
+    -- Plot errors for reference
+    ---------------------------------------------------------------------------
+    gnuplot.plot(torch.Tensor(errors))
+end
 
 
 

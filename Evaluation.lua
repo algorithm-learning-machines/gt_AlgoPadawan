@@ -44,3 +44,33 @@ function evalModelOnDataset(model, dataset, criterion)
     errAvg = errAvg / data:size(1)
     print("Error in evaluation "..errAvg)
 end
+
+
+--------------------------------------------------------------------------------
+-- Evaluate a model trained on a certain dataset
+--------------------------------------------------------------------------------
+function evalModelOnDatasetNoProb(model, dataset, criterion)
+    local testSet = dataset.testSet
+    local data = testSet[1]
+    local labels = testSet[2]
+    local errAvg = 0.0
+    for i=1,data:size(1) do
+        local currentInstance = data[i]
+        local terminated = false
+        local numIterations = 0
+        local memory = currentInstance
+        local output = model:forward(currentInstance)
+        print("LABEL-------------")
+        print(labels[i])
+        print("OUTPUT------------")
+        print(output)
+        print("END---------------")
+        err = criterion:forward(output, labels[i])
+        errAvg = errAvg + err
+    end
+    ----------------------------------------------------------------------------
+    -- Average error
+    ----------------------------------------------------------------------------
+    errAvg = errAvg / data:size(1)
+    print("Error in evaluation "..errAvg)
+end

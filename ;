@@ -85,23 +85,17 @@ opt.vectorSize = dataset.vectorSize
 opt.inputSize = dataset.inputSize
 
 local model = Model.create(opt)
-
---xavier init
+print("gigi")
 local params, _ = model:parameters()
-for k,v in pairs(params) do
-    local s = v:size()
-    v:apply(function() return torch.normal(0,
-        torch.sqrt(1 / s[#s])) end)
-end
-
+print(params)
 --local pnll = nn.PNLLCriterion()
 --local prob_mse = nn.MSECriterion()
 --local dis = tonumber(opt.probabilityDiscount)
 --local paralelCriterion = nn.ParallelCriterion():add(prob_mse, dis):
     --add(pnll, 1 - dis)
 local mse = nn.MSECriterion()
-trainModelNoInputOrProb(model, mse, dataset, opt, optim.adam)
+--trainModelNoInputOrProb(model, mse, dataset, opt, optim.sgd)
 --trainModelOnlyMem(model,paralelCriterion, dataset, opt, optim.sgd)
-evalModelOnDatasetNoProb(model, dataset, mse)
+--evalModelOnDatasetNoProb(model, dataset, mse)
 
 

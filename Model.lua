@@ -2,8 +2,6 @@
 -- File containing model definition
 --------------------------------------------------------------------------------
 require "rnn" require "nngraph"
---require "cutorch"
---require "cunn"
 local Model = {}
 
 
@@ -12,7 +10,11 @@ local Model = {}
 --------------------------------------------------------------------------------
 function Model.create(opt)
     if opt.noInput == true then
-        return Model.__createNoInput(opt)
+        if opt.noProb == false then
+            return Model.__createNoInput(opt)
+        else
+            return Model.__createNoInputOrProb(opt)
+        end
     end
     return Model.__createWithInput(opt)
 end
@@ -202,6 +204,84 @@ function Model.__createNoInput(opt)
     return nn.gModule({initialMem}, {finMem, p})
 
 end
+
+
+
+--------------------------------------------------------------------------------
+-- Creates model based only on memory; no probability
+--------------------------------------------------------------------------------
+function Model.__createNoInputOrProb(opt)
+    local vectorSize = tonumber(opt.vectorSize)
+    local memSize = tonumber(opt.memorySize)
+    local RNN_size = 5 -- TODO add command line param
+    ----------------------------------------------------------------------------
+    --  Initial Memory
+    ----------------------------------------------------------------------------
+    local initialMem = nn.Identity()()
+    ----------------------------------------------------------------------------
+
+
+    ----------------------------------------------------------------------------
+    --  Address Encoder
+    ----------------------------------------------------------------------------
+    local reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
+    local enc = nn.GRU(memSize * vectorSize, memSize, RNN_size)(reshapedMem)
+    local address = nn.SoftMax()(enc)
+    ----------------------------------------------------------------------------
+
+
+    ----------------------------------------------------------------------------
+    -- Value Extractor
+    ----------------------------------------------------------------------------
+    --TODO for current problems may not need to send value here
+    local addressTransp = nn.Reshape(1, memSize)(address)
+
+    local value = nn.MM()({addressTransp, initialMem})
+    ----------------------------------------------------------------------------
+
+    ----------------------------------------------------------------------------
+    ---- Next address calculator
+    ----------------------------------------------------------------------------
+    local reshapedValue = nn.Squeeze(1)(value)
+    local valAddr = nn.JoinTable(1)({address, reshapedValue})
+    local addrCalc =
+        nn.GRU(memSize + vectorSize, memSize, RNN_size)(valAddr)
+    ----------------------------------------------------------------------------
+
+
+    ----------------------------------------------------------------------------
+    ---- Next value calculator
+    ----------------------------------------------------------------------------
+    local valueCalc =
+        nn.GRU(memSize + vectorSize, vectorSize, RNN_size)(valAddr)
+    ----------------------------------------------------------------------------
+
+
+    ----------------------------------------------------------------------------
+    ---- Memory Calculator
+    ----------------------------------------------------------------------------
+
+    ----adder
+    local resizeValueCalc = nn.Reshape(1, vectorSize)(valueCalc)
+    local resizeAddrCalc = nn.Reshape(memSize, 1)(addrCalc)
+    local adder = nn.MM()({resizeAddrCalc, resizeValueCalc})
+
+
+    ---- eraser
+    local addrCalcTransp = nn.Reshape(1, memSize)(addrCalc)
+    local AT_M_t_1 =  nn.MM()({addrCalcTransp, initialMem})
+    local resAddrCalc = nn.Reshape(memSize, 1)(addrCalc)
+    local AAT_M_t_1 = nn.MM()({resAddrCalc, AT_M_t_1})
+
+    ----memory update
+    local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
+    local finMem = nn.Sigmoid()(nn.CAddTable()({memEraser, adder}))
+    ----------------------------------------------------------------------------
+
+    return nn.gModule({initialMem}, {finMem})
+
+end
+
 
 --------------------------------------------------------------------------------
 -- Save model to file

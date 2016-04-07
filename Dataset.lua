@@ -116,7 +116,7 @@ end
 -- target: Final Memory (Template on first two positions)
 --------------------------------------------------------------------------------
 function Dataset.__genRepeatOnce(
-     setSize, vectorSize, minVal, maxVal, exclusionSet, memorySize)
+    setSize, vectorSize, minVal, maxVal, exclusionSet, memorySize)
     local inputs = Tensor(setSize, memorySize, vectorSize)
     local labels = Tensor(setSize, memorySize, vectorSize)
 
@@ -130,10 +130,15 @@ function Dataset.__genRepeatOnce(
              template = Dataset.__numToBits(torch.random(minVal, maxVal),
                 vectorSize)
         end
+       
         local inputMemory = torch.repeatTensor(torch.zeros(1, vectorSize),
             memorySize - 1, 1)
         inputMemory = torch.cat(template:t(), inputMemory, 1)
         inputs[i] = inputMemory
+        local idx = torch.linspace(1,inputs[i]:size(1), inputs[i]:size(1)):long()
+        idx[1], idx[2] = 2, 1
+        inputs[i] = inputs[i]:index(1, idx)
+        --print(inputs[i])
         inputOriginal[tostring(template)] = template
         outputMemory = inputMemory:clone()
         outputMemory[2] = template:clone()
