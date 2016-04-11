@@ -68,9 +68,9 @@ function runUnitTestSuite(testSuite)
 end
 
 print("Running model tests...")
-runUnitTestSuite(modelTests)
+--runUnitTestSuite(modelTests)
 print("Running data tests...")
-runUnitTestSuite(dataTests)
+--runUnitTestSuite(dataTests)
 --print("Running training tests...")
 --runUnitTestSuite(trainingTests)
 
@@ -91,8 +91,10 @@ local params, _ = model:parameters()
 for k,v in pairs(params) do
     local s = v:size()
     v:apply(function() return torch.normal(0,
-        torch.sqrt(1 / s[#s])) end)
+        torch.sqrt(3 / s[#s])) end)
 end
+
+opt.fixedSteps = tonumber(opt.memorySize)
 
 --local pnll = nn.PNLLCriterion()
 --local prob_mse = nn.MSECriterion()
@@ -101,8 +103,11 @@ end
     --add(pnll, 1 - dis)
 local mse = nn.MSECriterion()
 
---trainModelNoInputOrProb(model, mse, dataset, opt, optim.adam)
+--trainModelSupervisedSteps(model, mse, dataset, opt, optim.adam)
+trainModelNoInputOrProb(model, mse, dataset, opt, optim.adam)
 --trainModelOnlyMem(model,paralelCriterion, dataset, opt, optim.sgd)
---evalModelOnDatasetNoProb(model, dataset, mse)
+evalModelOnDataset(model, dataset, mse)
+
+--evalModelSupervisedSteps(model, dataset, mse, opt)
 
 

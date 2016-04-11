@@ -49,6 +49,47 @@ end
 --------------------------------------------------------------------------------
 -- Evaluate a model trained on a certain dataset
 --------------------------------------------------------------------------------
+function evalModelSupervisedSteps(model, dataset, criterion, opt)
+    local fixedSteps = tonumber(opt.fixedSteps)
+    local testSet = dataset.testSet
+    local data = testSet[1]
+    local labels = testSet[2]
+    --print(labels)
+    local errAvg = 0.0
+    for i=1,data:size(1) do
+        local currentInstance = data[i]
+        local numIterations = 1
+        local memory = currentInstance
+        local grandErr = 0.0
+        for j = 1,fixedSteps do
+            output = model:forward(memory)
+            print(output:size())
+            print(labels[i]:size())
+            err = criterion:forward(output, labels[i][j])
+            grandErr = grandErr + err
+            print("LABEL-------------")
+            print(labels[i][j])
+            print("OUTPUT------------")
+            print(output)
+            print("END---------------")
+            memory = output
+        end
+        grandErr = grandErr / fixedSteps
+        local output = model:forward(currentInstance)
+        errAvg = errAvg + grandErr
+    end
+    ----------------------------------------------------------------------------
+    -- Average error
+    ----------------------------------------------------------------------------
+    errAvg = errAvg / data:size(1)
+    print("Error in evaluation "..errAvg)
+end
+
+
+
+--------------------------------------------------------------------------------
+-- Evaluate a model trained on a certain dataset, trained
+--------------------------------------------------------------------------------
 function evalModelOnDatasetNoProb(model, dataset, criterion)
     local testSet = dataset.testSet
     local data = testSet[1]

@@ -29,6 +29,38 @@ function Dataset:getNextBatch(batchSize)
     return batch
 end
 
+-- TODO implement generic getNextBatch
+function Dataset:getNextBatchSupervisedSBS(batchSize)
+    if (self.batchIndex + batchSize - 1 > self.trainSize) then
+        return nil
+    end
+    local args_input = {}  
+    local args_lable = {}
+    args_input[1] = batchSize
+    args_lable[1] = batchSize
+    for i = 2,#self.trainSet[1]:size() do
+        args_input[#args_input + 1] = self.trainSet[1]:size(i)
+    end
+
+    for i = 2,#self.trainSet[2]:size() do
+        args_lable[#args_lable + 1] = self.trainSet[2]:size(i)
+    end
+
+    local batch = {Tensor(unpack(args_input)), Tensor(unpack(args_lable))}
+
+    for i=self.batchIndex,math.min(self.batchIndex + batchSize - 1,
+        self.trainSize) do
+        batch[1][i - self.batchIndex + 1] = self.trainSet[1][i]
+        batch[2][i - self.batchIndex + 1] = self.trainSet[2][i]
+    end
+
+    self.batchIndex = self.batchIndex + batchSize
+
+    return batch
+
+end
+
+
 
 --------------------------------------------------------------------------------
 -- Resets the batch index
@@ -106,9 +138,9 @@ function Dataset.create(opt)
         trainSet, trainNumbers = Dataset.__genRepeatK(
         self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},
         self.memorySize, self.repetitions)
-        testSet, _ = Dataset.__genRepeatOnce(self. testSize,
+        testSet, _ = Dataset.__genRepeatK(self. testSize,
             self.vectorSize, self.minVal, self.maxVal, trainNumbers,
-            self.memorySize, repetitions)
+            self.memorySize, self.repetitions)
     else
         print("Dataset type " .. opt.dataset_type .. "Not implemented yet!")
         os.exit()
