@@ -54,7 +54,6 @@ function evalModelSupervisedSteps(model, dataset, criterion, opt)
     local testSet = dataset.testSet
     local data = testSet[1]
     local labels = testSet[2]
-    --print(labels)
     local errAvg = 0.0
     for i=1,data:size(1) do
         local currentInstance = data[i]
@@ -88,7 +87,7 @@ end
 
 
 --------------------------------------------------------------------------------
--- Evaluate a model trained on a certain dataset, trained
+-- Evaluate a model trained on a certain dataset, supervised, single step
 --------------------------------------------------------------------------------
 function evalModelOnDatasetNoProb(model, dataset, criterion)
     local testSet = dataset.testSet

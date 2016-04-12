@@ -94,7 +94,7 @@ for k,v in pairs(params) do
         torch.sqrt(3 / s[#s])) end)
 end
 
-opt.fixedSteps = tonumber(opt.memorySize)
+opt.fixedSteps = 1--tonumber(opt.memorySize)
 
 --local pnll = nn.PNLLCriterion()
 --local prob_mse = nn.MSECriterion()
@@ -105,8 +105,9 @@ local mse = nn.MSECriterion()
 
 --trainModelSupervisedSteps(model, mse, dataset, opt, optim.adam)
 trainModelNoInputOrProb(model, mse, dataset, opt, optim.adam)
+evalModelOnDatasetNoProb(model, dataset, mse)
 --trainModelOnlyMem(model,paralelCriterion, dataset, opt, optim.sgd)
-evalModelOnDataset(model, dataset, mse)
+--evalModelOnDataset(model, dataset, mse)
 
 --evalModelSupervisedSteps(model, dataset, mse, opt)
 

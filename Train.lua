@@ -582,6 +582,7 @@ function trainModelNoInputOrProb(model, criterion, dataset, opt, optimMethod)
             for i = 1,#inputs do
                 -- estimate f
                 local memory = inputs[i]
+                print(memory:size())
                 local output = model:forward(memory)
                 local y_size, x_size = output:size(1), output:size(2)
                 local currentErr = criterion:forward(output, targets[i])

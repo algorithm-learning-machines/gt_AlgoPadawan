@@ -10,7 +10,9 @@ local Model = {}
 --------------------------------------------------------------------------------
 function Model.create(opt)
     if opt.noInput == true then
-        if opt.noProb == false then
+        if opt.noProb then
+            return Model.__createNoInputOrProb(opt)
+        else
             return Model.__createNoInput(opt)
         end
     end
