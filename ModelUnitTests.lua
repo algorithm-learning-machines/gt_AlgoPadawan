@@ -64,7 +64,7 @@ modelTests["inputAndMemory"] = function()
    opt.memorySize = dataset.memorySize
    opt.inputSize = dataset.inputSize
 
-   m = Model.create(opt)
+   m = Model.createUniversal(opt)
    memory = Tensor(opt.memorySize, opt.vectorSize):fill(0)
    local f = m:forward({memory, dataset:getNextBatch(1)[1][1][1]})
 
@@ -125,7 +125,7 @@ modelTests["memory"] = function()
    opt.memorySize = dataset.memorySize
    opt.inputSize = dataset.inputSize
    opt.noInput = true
-   m = Model.create(opt)
+   m = Model.createUniversal(opt)
    memory = Tensor(opt.memorySize, opt.vectorSize):fill(0)
    local f = m:forward(memory)
 
@@ -184,7 +184,7 @@ modelTests["saveAndLoad"] = function()
    opt.memorySize = dataset.memorySize
    opt.inputSize = dataset.inputSize
    opt.noInput = true
-   m = Model.create(opt)
+   m = Model.createUniversal(opt)
    local res = "...OK!"
    local ret = Model.saveModel(m, "dummyFile", false)
    if ret ~= true then
@@ -258,7 +258,7 @@ modelTests["memoryNRAM"] = function()
    opt.inputSize = dataset.inputSize
    opt.noInput = true -- only memory
    opt.NRAMProb = true --use nram probability model
-   m = Model.create(opt)
+   m = Model.createUniversal(opt)
    memory = Tensor(opt.memorySize, opt.vectorSize):fill(0)
    local f = m:forward({memory, torch.zeros(1)})
 
