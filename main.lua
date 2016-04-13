@@ -68,7 +68,7 @@ function runUnitTestSuite(testSuite)
 end
 
 print("Running model tests...")
---runUnitTestSuite(modelTests)
+runUnitTestSuite(modelTests)
 print("Running data tests...")
 --runUnitTestSuite(dataTests)
 --print("Running training tests...")
@@ -104,8 +104,8 @@ opt.fixedSteps = 1--tonumber(opt.memorySize)
 local mse = nn.MSECriterion()
 
 --trainModelSupervisedSteps(model, mse, dataset, opt, optim.adam)
-trainModelNoInputOrProb(model, mse, dataset, opt, optim.adam)
-evalModelOnDatasetNoProb(model, dataset, mse)
+--trainModelNoInputOrProb(model, mse, dataset, opt, optim.adam)
+--evalModelOnDatasetNoProb(model, dataset, mse)
 --trainModelOnlyMem(model,paralelCriterion, dataset, opt, optim.sgd)
 --evalModelOnDataset(model, dataset, mse)
 
