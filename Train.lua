@@ -230,13 +230,14 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                         --currentOutput[2]},
                     local t = targets[i] 
                     if opt.supervised then
-                       t = targets[i][j]
+                       t = targets[i][j] -- sequence of targets in supervised
                     end
                     local currentErr = criterion:forward(currentOutput,t) 
                     --{prob_target, targets[i]})
                     local currentDf_do = criterion:backward(currentOutput,t)
-
-                    if opt.targetIndex ~= nil then
+                     
+                    -- Are we only looking at a specific part of the memory?
+                    if opt.targetIndex ~= nil then 
                         local memoryDev = torch.cat(currentDf_do[1]:reshape(1,
                         currentDf_do[1]:size(1)),
                         torch.zeros(memSize-1, opt.vectorSize), 1)
