@@ -13,27 +13,6 @@ function Dataset:getNextBatch(batchSize)
     if (self.batchIndex + batchSize - 1 > self.trainSize) then
         return nil
     end
-
-    local batch = {Tensor(batchSize, self.trainSet[1]:size(2),
-        self.trainSet[1]:size(3)), Tensor(batchSize,
-        self.trainSet[2]:size(2), self.trainSet[2]:size(3))}
-
-    for i=self.batchIndex,math.min(self.batchIndex + batchSize - 1,
-        self.trainSize) do
-        batch[1][i - self.batchIndex + 1] = self.trainSet[1][i]
-        batch[2][i - self.batchIndex + 1] = self.trainSet[2][i]
-    end
-
-    self.batchIndex = self.batchIndex + batchSize
-
-    return batch
-end
-
--- TODO implement generic getNextBatch
-function Dataset:getNextBatchSupervisedSBS(batchSize)
-    if (self.batchIndex + batchSize - 1 > self.trainSize) then
-        return nil
-    end
     local args_input = {}  
     local args_lable = {}
     args_input[1] = batchSize

@@ -70,7 +70,7 @@ end
 print("Running model tests...")
 runUnitTestSuite(modelTests)
 print("Running data tests...")
---runUnitTestSuite(dataTests)
+runUnitTestSuite(dataTests)
 --print("Running training tests...")
 --runUnitTestSuite(trainingTests)
 
