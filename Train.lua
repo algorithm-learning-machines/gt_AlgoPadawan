@@ -114,7 +114,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
     -- Training loop
     ----------------------------------------------------------------------------
     while batch ~= nil do
-        --gradParameters:zero()
         batchNum = batchNum + 1
         ------------------------------------------------------------------------
         -- Create mini batches
@@ -183,7 +182,16 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
                     cloneOutputs[numIterations] = output -- needed for Criterion
                     probabilities[numIterations] = output[2]
+                    ------------------------------------------------------------
+                    -- Should end
+                    ------------------------------------------------------------
+                    if not opt.supervised then
+                       if probabilities[numIterations][1] > 0.9 then
+                          terminated = true 
+                       end
+                    end
                     numIterations = numIterations + 1
+                    ------------------------------------------------------------
 
                     ------------------------------------------------------------
                     -- Remember models and their respective inputs
@@ -194,6 +202,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     -- needed for backprop
                     memory = output[1]
                     inputsIndex = inputsIndex + 1
+                   
                 end
 
                 ----------------------------------------------------------------

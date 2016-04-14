@@ -29,13 +29,15 @@ cmd:option('-batchSize', '1', 'number of sequences to train in parallel')
 cmd:option('-memorySize', '20', 'number of entries in linear memory')
 cmd:option('-useCuda', false, 'Should model use cuda')
 cmd:option('-noInput', true, 'Architecture used implies separate input')
-cmd:option('-maxForwardSteps', '10', 'maximum forward steps model makes')
+cmd:option('-maxForwardSteps', '1', 'maximum forward steps model makes')
 cmd:option('-saveEvery', 5, 'save model to file in training after this num')
 cmd:option('-saveFile', "autosave.model", 'file to save model in ')
 cmd:option('-probabilityDiscount', "0.99", 'probability discount paralel \
     criterion')
 cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
+cmd:option('supervised' ,true, 'Are we using supervised training')
+cmd:option('-plot', true, 'Should we plot errors during training')
 cmd:text()
 
 local opt = cmd:parse(arg)
@@ -96,13 +98,6 @@ end
 
 local mse = nn.MSECriterion()
 
--- extra params, should put them in command line
-opt.supervised = true
-opt.noInput = true
-opt.plot = true
-opt.saveEvery = 10
-opt.maxForwardSteps = 1
---
 
 trainModel(model, mse, dataset, opt, optim.adam)
 evalModelSupervised(model, dataset, mse, opt)
