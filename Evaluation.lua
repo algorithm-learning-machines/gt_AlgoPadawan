@@ -49,7 +49,7 @@ end
 --------------------------------------------------------------------------------
 -- Evaluate a model trained on a certain dataset
 --------------------------------------------------------------------------------
-function evalModelSupervisedSteps(model, dataset, criterion, opt)
+function evalModelSupervised(model, dataset, criterion, opt)
     local fixedSteps = tonumber(opt.fixedSteps)
     local testSet = dataset.testSet
     local data = testSet[1]

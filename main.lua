@@ -30,7 +30,7 @@ cmd:option('-memorySize', '20', 'number of entries in linear memory')
 cmd:option('-useCuda', false, 'Should model use cuda')
 cmd:option('-noInput', true, 'Architecture used implies separate input')
 cmd:option('-maxForwardSteps', '10', 'maximum forward steps model makes')
-cmd:option('-saveEvery', 1, 'save model to file in training after this num')
+cmd:option('-saveEvery', 5, 'save model to file in training after this num')
 cmd:option('-saveFile', "autosave.model", 'file to save model in ')
 cmd:option('-probabilityDiscount', "0.99", 'probability discount paralel \
     criterion')
@@ -94,21 +94,17 @@ for k,v in pairs(params) do
         torch.sqrt(3 / s[#s])) end)
 end
 
-opt.fixedSteps = 1--tonumber(opt.memorySize)
-
---local pnll = nn.PNLLCriterion()
---local prob_mse = nn.MSECriterion()
---local dis = tonumber(opt.probabilityDiscount)
---local paralelCriterion = nn.ParallelCriterion():add(prob_mse, dis):
-    --add(pnll, 1 - dis)
 local mse = nn.MSECriterion()
 
---trainModelSupervisedSteps(model, mse, dataset, opt, optim.adam)
---trainModelNoInputOrProb(model, mse, dataset, opt, optim.adam)
---evalModelOnDatasetNoProb(model, dataset, mse)
---trainModelOnlyMem(model,paralelCriterion, dataset, opt, optim.sgd)
---evalModelOnDataset(model, dataset, mse)
+-- extra params, should put them in command line
+opt.supervised = true
+opt.noInput = true
+opt.plot = true
+opt.saveEvery = 10
+opt.maxForwardSteps = 1
+--
 
---evalModelSupervisedSteps(model, dataset, mse, opt)
+trainModel(model, mse, dataset, opt, optim.adam)
+evalModelSupervised(model, dataset, mse, opt)
 
 
