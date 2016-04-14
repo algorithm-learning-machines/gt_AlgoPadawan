@@ -70,7 +70,7 @@ trainingTests["TrainOnRepeaterCheck"] = function()
     --getting past this point means basic layout of training procedure
     --makes sense
     --trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
-    if pcall(trainModelOnlyMem, model,nn.PNLLCriterion(),
+    if pcall(trainModel, model,nn.PNLLCriterion(),
         dataset, opt, optim.sgd) then
         return "...OK!"
     end
@@ -122,8 +122,7 @@ trainingTests["TrainOnBinaryAdditionCheck"] = function()
     opt.batchSize = opt.trainSize
     --getting past this point means basic layout of training procedure
     --makes sense
-    --trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
-    if pcall(trainModelMemOnly, model,nn.PNLLCriterion(),
+    if pcall(trainModel, model,nn.PNLLCriterion(),
         dataset, opt, optim.sgd) then
         return "...OK!"
     end
@@ -172,8 +171,8 @@ trainingTests["TrainOnRepeatOnceCheck"] = function()
     opt.batchSize = opt.trainSize
     --getting past this point means basic layout of training procedure
     --makes sense
-    --trainModelOnlyMem(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
-    if pcall(trainModelOnlyMem, model,nn.PNLLCriterion(),
+    --trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.sgd)
+    if pcall(trainModel, model,nn.PNLLCriterion(),
         dataset, opt, optim.sgd) then
         return "...OK!"
     end

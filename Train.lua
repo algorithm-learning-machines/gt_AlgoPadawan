@@ -47,7 +47,6 @@ function PNLLCriterion:sumDifference(input, target)
     ----------------------------------------------------------------------------
     local memory = input[1]
     local memSize = memory:size()
-
     ----------------------------------------------------------------------------
     -- Vectorize loss calculus
     ----------------------------------------------------------------------------
@@ -55,9 +54,7 @@ function PNLLCriterion:sumDifference(input, target)
     local f2a = torch.ones(memSize) - target
     local f2b = torch.log(torch.ones(memSize) - memory) --(1-tk) * log(1-mk)
     local f2 = f2a:cmul(f2b) -- tk * log(mk) + (1 - tk) * log(1 - mk)
-    return (f1 + f2):sum()
-
-end
+    return (f1 + f2):sum() end
 
 
 function PNLLCriterion:updateGradInput(input, target)
@@ -107,7 +104,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
     ----------------------------------------------------------------------------
     -- Work in batches
     ----------------------------------------------------------------------------
-    --model:training() -- set model in training mode
+    model:training() -- set model in training mode
 
     batch = dataset:getNextBatch(batchSize)
     local batchNum = 1
@@ -168,15 +165,18 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     else
                         currentInput = torch.zeros(inputs[i][1]:size())
                     end
-                    cloneInputs[numIterations] = {memory, currentInput}
+                    if opt.noInput then
+                       cloneInputs[numIterations] = memory
+                    else
+                       cloneInputs[numIterations] = {memory, currentInput}
+                    end
 
                     local output = clones[numIterations]:forward(
                         cloneInputs[numIterations])
 
 
                     cloneOutputs[numIterations] = output -- needed for Criterion
-                    probabilitties[numIterations] = output[2]
-                    print(probabilities[numIterations])
+                    probabilities[numIterations] = output[2]
                     numIterations = numIterations + 1
 
                     ------------------------------------------------------------
@@ -206,13 +206,16 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Find error and output gradients at this time step
                     ------------------------------------------------------------
-                    local prob_target = torch.Tensor{0}
-                    if j > 1 then
-                        prob_target = torch.Tensor{1}
-                    end
-                    local currentErr = criterion:forward({currentOutput[2],
-                        currentOutput},
-                    {prob_target, targets[i]})
+                    --local prob_target = torch.Tensor{0}
+                    --if j > 1 then
+                        --prob_target = torch.Tensor{1}
+                    --end
+                     -- TODO for parallel criterion here
+                    --local currentErr = criterion:forward({currentOutput,
+                        --currentOutput[2]},
+                    local currentErr = criterion:forward(currentOutput,
+                    targets[i]) 
+                    --{prob_target, targets[i]})
                     local currentDf_do = criterion:backward(currentOutput,
                         targets[i])
 
@@ -226,8 +229,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Output derivatives
                     ------------------------------------------------------------
-                    currentDf_do[2] = Tensor{currentDf_do[2]}
-
                     clones[j]:backward(cloneInputs[i],
                         currentDf_do)
 
@@ -400,7 +401,6 @@ function trainModelOnlyMem(model, criterion, dataset, opt, optimMethod)
                         cloneInputs[numIterations])
 
                     local prob_val = output[2][1]
-                    print(prob_val)
                     cloneOutputs[numIterations] = output -- needed for Criterion
 
                     numIterations = numIterations + 1
@@ -536,7 +536,6 @@ function trainModelNoInputOrProb(model, criterion, dataset, opt, optimMethod)
     -- Work in batches
     ----------------------------------------------------------------------------
     model:training() -- set model in training mode
-    --print(parameters)
     batch = dataset:getNextBatch(batchSize)
     local batchNum = 1
     local errors = {}
@@ -565,7 +564,6 @@ function trainModelNoInputOrProb(model, criterion, dataset, opt, optimMethod)
         -- Create closure to evaluate f(X) and df/dX
         ------------------------------------------------------------------------
 
-        --print(inputs[1])
         local feval = function(x)
             -- get new parameters
             if x ~= parameters then
@@ -582,7 +580,6 @@ function trainModelNoInputOrProb(model, criterion, dataset, opt, optimMethod)
             for i = 1,#inputs do
                 -- estimate f
                 local memory = inputs[i]
-                print(memory:size())
                 local output = model:forward(memory)
                 local y_size, x_size = output:size(1), output:size(2)
                 local currentErr = criterion:forward(output, targets[i])
@@ -743,7 +740,6 @@ function trainModelSupervisedSteps(model, criterion, dataset, opt, optimMethod)
                 ----------------------------------------------------------------
                 -- Propagate gradients from front to back; cumulate gradients
                 ----------------------------------------------------------------
-                print(#clones)
                 local err = 0
                 for j=#clones - 1,1,-1 do
 
@@ -757,10 +753,6 @@ function trainModelSupervisedSteps(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     -- Find error and output gradients at this time step
                     ------------------------------------------------------------
-                    print("----------------------------------------------stuff")
-                    print(currentOutput)
-                    print(targets[i][j])
-                    print("----------------------------------------other stuff")
                     local currentErr = criterion:forward(
                         currentOutput, targets[i][j])
                     ------------------------------------------------------------

@@ -71,8 +71,8 @@ print("Running model tests...")
 runUnitTestSuite(modelTests)
 print("Running data tests...")
 runUnitTestSuite(dataTests)
---print("Running training tests...")
---runUnitTestSuite(trainingTests)
+print("Running training tests...")
+runUnitTestSuite(trainingTests)
 
 --------------------------------------------------------------------------------
 -- Train on repeat-once dataset

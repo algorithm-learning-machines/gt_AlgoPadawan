@@ -50,7 +50,6 @@ end
 
 --------------------------------------------------------------------------------
 -- Init dataset according to given parameters from main entry point
--- TODO must find a way to decouple dataset creation from batch manipulation
 -- Dataset shape differs
 --------------------------------------------------------------------------------
 function Dataset.create(opt)
@@ -63,12 +62,12 @@ function Dataset.create(opt)
     self.vectorSize = tonumber(opt.vectorSize)
     self.minVal = tonumber(opt.minVal)
     self.maxVal = tonumber(opt.maxVal)
-    -- TODO this line couples dataset to model, not necessarily good
     self.memorySize = tonumber(opt.memorySize)
     self.batchIndex = 1 -- initial index
 
     local trainSet = {}
     local testSet = {}
+
     if opt.datasetType == "binary_addition" then
         self.inputSize = self.vectorSize
         local trainNumbers = {}
@@ -103,6 +102,7 @@ function Dataset.create(opt)
         testSet, _ = Dataset.__genRepeatSet(self. testSize,
             self.vectorSize, self.minVal, self.maxVal, trainNumbers,
             self.memorySize)
+
     elseif opt.datasetType == "repeat_once" then
         self.inputSize = self.vectorSize
         trainSet, trainNumbers = Dataset.__genRepeatOnce(
@@ -111,6 +111,7 @@ function Dataset.create(opt)
         testSet, _ = Dataset.__genRepeatOnce(self. testSize,
             self.vectorSize, self.minVal, self.maxVal, trainNumbers,
             self.memorySize)
+
     elseif opt.datasetType == "repeat_k" then
         self.repetitions = tonumber(opt.repetitions)
         self.inputSize = self.vectorSize
