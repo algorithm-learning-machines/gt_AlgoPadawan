@@ -175,7 +175,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     else
                        cloneInputs[numIterations] = {memory, currentInput}
                     end
-
+                    print(cloneInputs[numIterations])
                     local output = clones[numIterations]:forward(
                         cloneInputs[numIterations])
 

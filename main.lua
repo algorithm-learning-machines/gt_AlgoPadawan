@@ -15,8 +15,7 @@ require 'cutorch'
 
 
 --------------------------------------------------------------------------------
--- Command line options
---------------------------------------------------------------------------------
+-- Command line options --------------------------------------------------------------------------------
 
 local cmd = torch.CmdLine()
 cmd:text()
@@ -70,11 +69,11 @@ function runUnitTestSuite(testSuite)
 end
 
 print("Running model tests...")
-runUnitTestSuite(modelTests)
+--runUnitTestSuite(modelTests)
 print("Running data tests...")
-runUnitTestSuite(dataTests)
+--runUnitTestSuite(dataTests)
 print("Running training tests...")
-runUnitTestSuite(trainingTests)
+--runUnitTestSuite(trainingTests)
 
 --------------------------------------------------------------------------------
 -- Train on repeat-once dataset
@@ -85,21 +84,36 @@ setmetatable(dataset, Dataset)
 
 opt.vectorSize = dataset.vectorSize
 opt.inputSize = dataset.inputSize
+local ShiftLearn = require('ShiftLearn')
+
+local gigi = ShiftLearn.create(10)
+--print(gigi:forward({torch.zeros(10), torch.zeros(10)}))
+local p1 = ShiftLearn.createWrapper(tonumber(opt.memorySize))
+
+--print(p1:forward(torch.zeros(opt.memorySize)))
+--print(p1)
+--print(ShiftLearn.createWrapper(tonumber(opt.memorySize))())
+opt.separateValAddr = true
+opt.noInput = false
 
 local model = Model.create(opt)
+--model:forward(
+   --{torch.zeros(tonumber(opt.memorySize),tonumber(opt.vectorSize)),
+   --torch.zeros(tonumber(opt.vectorSize))})
+   
 
---xavier init
-local params, _ = model:parameters()
-for k,v in pairs(params) do
-    local s = v:size()
-    v:apply(function() return torch.normal(0,
-        torch.sqrt(3 / s[#s])) end)
-end
+----xavier init
+--local params, _ = model:parameters()
+--for k,v in pairs(params) do
+    --local s = v:size()
+    --v:apply(function() return torch.normal(0,
+        --torch.sqrt(3 / s[#s])) end)
+--end
 
-local mse = nn.MSECriterion()
+--local mse = nn.MSECriterion()
 
 
-trainModel(model, mse, dataset, opt, optim.adam)
-evalModelSupervised(model, dataset, mse, opt)
+--trainModel(model, mse, dataset, opt, optim.adam)
+--evalModelSupervised(model, dataset, mse, opt)
 
 

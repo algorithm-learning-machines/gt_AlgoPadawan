@@ -35,4 +35,26 @@ function ShiftGenerator.create(vecSize)
 
 end
 
+function ShiftGenerator.createWrapper(vecSize)
+   -- shift address input
+
+   -----------------------------------------------------------------------------
+   -- Internal shift generator
+   -----------------------------------------------------------------------------
+   local shifter = ShiftGenerator.create(vecSize)
+
+   -----------------------------------------------------------------------------
+   -- Currently shift amount is constant
+   -----------------------------------------------------------------------------
+   local dep_vec = torch.zeros(vecSize)
+   dep_vec[1] = 1
+   local dep_constant = nn.Constant(dep_vec)()
+   local shift_address = nn.Identity()()
+   local a = nn.Identity()()
+   local b = nn.Identity()()
+   local c = nn.Identity()()
+   local shift_wrapper = shifter({a, c})--dep_constant})
+   return nn.gModule({shift_address, b}, {shift_wrapper})
+end
+
 return ShiftGenerator 
