@@ -51,7 +51,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    if addressReader then
       AR = addressReader
       params = {memSize}
-      linkedNode = prevWriteAddress
+      linkedNode = {nn.Identity()(), prevWriteAddress}
    end
 
    local enc = AR(unpack(params))(linkedNode)
@@ -87,7 +87,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
          inputAddr = nn.JoinTable(1)({input, address})
       end
    else
-      if not opt.noInput then
+      if not pt.noInput then
          local auxJoin = nn.JoinTable(1)({input, address})
          inputVal = nn.JoinTable(1)({auxJoin, reshapedValue})
          inputAddr = inputVal

@@ -50,11 +50,12 @@ function ShiftGenerator.createWrapper(vecSize)
    dep_vec[1] = 1
    local dep_constant = nn.Constant(dep_vec)()
    local shift_address = nn.Identity()()
-   local a = nn.Identity()()
-   local b = nn.Identity()()
-   local c = nn.Identity()()
-   local shift_wrapper = shifter({a, c})--dep_constant})
-   return nn.gModule({shift_address, b}, {shift_wrapper})
+   local shift_wrapper = shifter({dep_constant, shift_address})
+   --TODO this cannot work, references are weird!!! I need to use
+   --concat table like in the example
+   return nn.gModule({dep_constant, shift_address}, {shift_wrapper})
+
+   --return nn.gModule({dep_constant, shift_address}, {shift_wrapper})
 end
 
 return ShiftGenerator 
