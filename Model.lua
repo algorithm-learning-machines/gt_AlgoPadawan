@@ -93,7 +93,10 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    ----------------------------------------------------------------------------
    --  Address Encoder
    ----------------------------------------------------------------------------
-   --local reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
+   local reshapedMem = nil 
+   if not addressReader then
+      reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
+   end
    --TODO here comes custom address reader
    local AR = nn.GRU 
    params = {memSize * vectorSize, memSize, RNN_steps}
@@ -221,7 +224,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    if not opt.noInput then -- add input to initial dict
       in_dict[#in_dict + 1] = input
    end
-   if opt.backAddr then -- add back address to input
+   if addressReader then -- add back address to input
       in_dict[#in_dict + 1] = prevWriteAddress
       out_dict[#out_dict + 1] = addrCalc
    end

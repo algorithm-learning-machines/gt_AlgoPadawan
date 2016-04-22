@@ -87,14 +87,15 @@ opt.inputSize = dataset.inputSize
 local ShiftLearn = require('ShiftLearn')
 
 opt.separateValAddr = true
-opt.noInput = true 
-opt.backAddr = true
+--opt.noInput = true 
+--opt.backAddr = false   -- not ok, internal redundant dependency
 a = nn.Identity()()
 b = nn.Identity()()
 --gogu = ShiftLearn.createWrapper(10)({a})
 --fifi = nn.gModule({a}, {gogu})
-model = Model.create(opt, ShiftLearn.createWrapper, ShiftLearn.createWrapper,
-   nn.Identity)
+--model = Model.create(opt, ShiftLearn.createWrapper, ShiftLearn.createWrapper,
+   --nn.Identity)
+model = Model.create(opt)
 
 
 --gigi:forward({torch.zeros(1), torch.zeros(10)})
@@ -114,7 +115,7 @@ model = Model.create(opt, ShiftLearn.createWrapper, ShiftLearn.createWrapper,
         --torch.sqrt(3 / s[#s])) end)
 --end
 
---local mse = nn.MSECriterion()
+local mse = nn.MSECriterion()
 
 
 --trainModel(model, mse, dataset, opt, optim.adam)

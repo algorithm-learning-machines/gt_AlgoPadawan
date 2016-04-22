@@ -161,6 +161,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 local cloneInputs = {}
                 local cloneOutputs = {}
                 local probabilities = {}
+                local prevAddr = torch.zeros(memSize)
                 clones[1] = model -- 1
                 local inputsIndex = 1 -- current input index;
                 while (not terminated) and numIterations <= maxForwardSteps do
@@ -175,13 +176,24 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     else
                        cloneInputs[numIterations] = {memory, currentInput}
                     end
-                    print(cloneInputs[numIterations])
+
+                    if opt.backAddr then --propagating previous address
+                       cloneInputs[numIterations] = {memory, prevAddr}
+                    end
+                    --print(cloneInputs[numIterations])
                     local output = clones[numIterations]:forward(
                         cloneInputs[numIterations])
 
 
                     cloneOutputs[numIterations] = output -- needed for Criterion
-                    probabilities[numIterations] = output[2]
+
+                    if not opt.noProb then
+                       probabilities[numIterations] = output[#output]
+                    end
+
+                    if opt.backAddr then
+                       prevAddr = output[2]
+                    end
                     ------------------------------------------------------------
                     -- Should end
                     ------------------------------------------------------------
