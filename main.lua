@@ -15,39 +15,9 @@ require 'cutorch'
 
 
 --------------------------------------------------------------------------------
--- Command line options --------------------------------------------------------------------------------
-
-local cmd = torch.CmdLine()
-cmd:text()
-cmd:text('Training a neural architecture to learn algorithms')
-cmd:text()
-cmd:text('Options')
-cmd:option('-trainFile','train.t7', 'filename of the training set')
-cmd:option('-testFile', 'test.t7', 'filename of the test set')
-cmd:option('-batchSize', '1', 'number of sequences to train in parallel')
-cmd:option('-memorySize', '20', 'number of entries in linear memory')
-cmd:option('-useCuda', false, 'Should model use cuda')
-cmd:option('-noInput', true, 'Architecture used implies separate input')
-cmd:option('-maxForwardSteps', '1', 'maximum forward steps model makes')
-cmd:option('-saveEvery', 5, 'save model to file in training after this num')
-cmd:option('-saveFile', "autosave.model", 'file to save model in ')
-cmd:option('-probabilityDiscount', "0.99", 'probability discount paralel \
-    criterion')
-cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
-cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
-cmd:option('supervised' ,true, 'Are we using supervised training')
-cmd:option('-plot', true, 'Should we plot errors during training')
-cmd:text()
-
-local opt = cmd:parse(arg)
-
-if opt.useCuda then
-    Tensor = torch.CudaTensor
-else
-    Tensor = torch.Tensor
-end
-
-
+-- Command line options 
+--------------------------------------------------------------------------------
+Tensor = torch.DoubleTensor
 --------------------------------------------------------------------------------
 -- Internal modules
 --------------------------------------------------------------------------------
@@ -79,8 +49,53 @@ print("Running training tests...")
 -- Train on repeat-once dataset
 --------------------------------------------------------------------------------
 
-local dataset = torch.load(opt.trainFile)
-setmetatable(dataset, Dataset)
+
+--------------------------------------------------------------------------------
+-- Create dataset
+--------------------------------------------------------------------------------
+
+opt = {}
+opt.vectorSize = 15
+opt.trainSize = 1000
+opt.testSize = 30
+opt.datasetType = 'repeat_k'
+opt.minVal = 1
+opt.maxVal = 5000
+opt.memorySize = 20
+opt.repetitions = 1
+local dataset = Dataset.create(opt) 
+print(dataset.trainSet[1][2])
+
+
+
+local cmd = torch.CmdLine()
+cmd:text()
+cmd:text('Training a neural architecture to learn algorithms')
+cmd:text()
+cmd:text('Options')
+cmd:option('-trainFile','train.t7', 'filename of the training set')
+cmd:option('-testFile', 'test.t7', 'filename of the test set')
+cmd:option('-batchSize', '1', 'number of sequences to train in parallel')
+cmd:option('-memorySize', '20', 'number of entries in linear memory')
+cmd:option('-useCuda', false, 'Should model use cuda')
+cmd:option('-noInput', true, 'Architecture used implies separate input')
+cmd:option('-maxForwardSteps', '1', 'maximum forward steps model makes')
+cmd:option('-saveEvery', 5, 'save model to file in training after this num')
+cmd:option('-saveFile', "autosave.model", 'file to save model in ')
+cmd:option('-probabilityDiscount', "0.99", 'probability discount paralel \
+    criterion')
+cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
+cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
+cmd:option('supervised' ,true, 'Are we using supervised training')
+cmd:option('-plot', true, 'Should we plot errors during training')
+cmd:text()
+
+local opt = cmd:parse(arg)
+
+
+
+
+--setmetatable(dataset, Dataset)
 
 opt.vectorSize = dataset.vectorSize
 opt.inputSize = dataset.inputSize
@@ -88,16 +103,17 @@ local ShiftLearn = require('ShiftLearn')
 
 --------------------------------------------------------------------------------
 -- TODO should integrate these options nicely
+--------------------------------------------------------------------------------
 opt.separateValAddr = true
 opt.noInput = true 
 opt.noProb = true
 opt.simplified = true
 opt.supervised = true
+opt.maxForwardSteps = dataset.repetitions
 --------------------------------------------------------------------------------
+
 local model = Model.create(opt, ShiftLearn.createWrapper,
    ShiftLearn.createWrapper, nn.Identity)
-
---local model = Model.create(opt)
 
 ----xavier init
 local params, _ = model:parameters()
@@ -108,7 +124,6 @@ for k,v in pairs(params) do
 end
 
 local mse = nn.MSECriterion()
-
 
 trainModel(model, mse, dataset, opt, optim.adam)
 --evalModelSupervised(model, dataset, mse, opt)

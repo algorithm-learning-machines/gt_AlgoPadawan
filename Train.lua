@@ -127,6 +127,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             table.insert(inputs, input)
             table.insert(targets, target)
         end
+
         batch = dataset:getNextBatch(batchSize)
         ------------------------------------------------------------------------
         -- Create closure to evaluate f(X) and df/dX
@@ -162,6 +163,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 local cloneOutputs = {}
                 local probabilities = {}
                 local prevAddr = torch.zeros(memSize)
+                prevAddr[1] = 1
                 clones[1] = model -- 1
                 local inputsIndex = 1 -- current input index;
                 while (not terminated) and numIterations <= maxForwardSteps do
@@ -239,6 +241,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                         --currentOutput[2]},
                     local t = targets[i] 
                     if opt.supervised then
+                       print(j)
                        t = targets[i][j] -- sequence of targets in supervised
                     end
                     local toCriterion = currentOutput

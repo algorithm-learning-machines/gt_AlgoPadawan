@@ -30,14 +30,12 @@ cmd:option('-datasetType', 'repeat_k', 'dataset type')
 cmd:option('-minVal', 1, 'minimum scalar value of dataset instances')
 cmd:option('-maxVal', 5000, 'maximum scalar value of dataset instances')
 cmd:option('-memorySize', 20, 'number of entries in memory')
-cmd:option('-maxForwardSteps', '5', 'maximum forward steps model makes')
 cmd:option('-repetitions', '1', 'number of times that the pattern is repeated')
 cmd:text()
 
 
 
 local opt = cmd:parse(arg)
-
 --------------------------------------------------------------------------------
 -- Generate and save data
 --------------------------------------------------------------------------------

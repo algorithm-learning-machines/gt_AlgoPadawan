@@ -1,5 +1,8 @@
 --------------------------------------------------------------------------------
--- File containing model definition -------------------------------------------------------------------------------- require "nn" require "rnn" 
+-- File containing model definition --------------------------------------------
+--------------------------------------------------------------------------------
+require "nn" 
+require "rnn" 
 require "nngraph"
 require "ShiftLearn"
 --nngraph.setDebug(true)
@@ -58,6 +61,11 @@ function Model.createDebug(opt, addressReader, addressWriter, valueWriter)
 
 end
 
+   
+--------------------------------------------------------------------------------
+-- !! Order of modules at end
+-- [initialMem, input, prevAddrWrite] -> [finMem, addrCalc, p, pNRAM]
+--------------------------------------------------------------------------------
 function Model.create(opt, addressReader, addressWriter, valueWriter)
    local vectorSize = tonumber(opt.vectorSize)
    local memSize = tonumber(opt.memorySize)
@@ -129,11 +137,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    local inputVal = nil
    local inputAddr = nil
    if opt.separateValAddr then
-      --print("SHOULD NOT GET HERE NOW!")
-      --os.exit(-1)
       if opt.noInput then
-         --print("SHOULD NOT GET HERE NOW!")
-         --os.exit(-1)
          inputVal = reshapedValue
          inputAddr = address
       else
@@ -210,12 +214,6 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
    local finMem = nn.CAddTable()({memEraser, adder})
    ----------------------------------------------------------------------------
-   
-   -----------------------------------------------------------------------------
-   -- !! Order of modules at end
-   -- [initialMem, input, prevAddrWrite] -> [finMem, addrCalc, p, pNRAM]
-   -----------------------------------------------------------------------------
-
    --TODO refacor rewrite dictionary 
    in_dict = {}
    out_dict = {}

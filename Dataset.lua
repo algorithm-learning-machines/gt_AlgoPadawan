@@ -303,11 +303,12 @@ function Dataset.__genRepeatK(setSize, vectorSize,
         inputOriginal[tostring(template)] = template
 
         for j=1,repetitions do
-            local outputRepeated = torch.repeatTensor(template:t(), j, 1)
+            local outputRepeated = torch.repeatTensor(template:t(), j + 1, 1)
             local zeroed = nil
+
             if j ~= memorySize then
                 zeroed = torch.repeatTensor(torch.zeros(1, vectorSize),
-                    memorySize - j, 1)
+                    memorySize - j - 1, 1)
             end
 
             local outputMemory = nil
