@@ -151,7 +151,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 if opt.noInput then
                    memory = inputs[i]
                 end
-
                 ----------------------------------------------------------------
                 -- Forward until probability comes close to 1 or until max
                 -- number of forwards steps has been reached

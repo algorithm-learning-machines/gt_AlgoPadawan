@@ -64,7 +64,6 @@ opt.maxVal = 5000
 opt.memorySize = 20
 opt.repetitions = 1
 local dataset = Dataset.create(opt) 
-print(dataset.trainSet[1][2])
 
 
 
@@ -93,10 +92,6 @@ cmd:text()
 local opt = cmd:parse(arg)
 
 
-
-
---setmetatable(dataset, Dataset)
-
 opt.vectorSize = dataset.vectorSize
 opt.inputSize = dataset.inputSize
 local ShiftLearn = require('ShiftLearn')
@@ -115,7 +110,7 @@ opt.maxForwardSteps = dataset.repetitions
 local model = Model.create(opt, ShiftLearn.createWrapper,
    ShiftLearn.createWrapper, nn.Identity)
 
-----xavier init
+--xavier init
 local params, _ = model:parameters()
 for k,v in pairs(params) do
     local s = v:size()
