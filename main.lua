@@ -86,39 +86,31 @@ opt.vectorSize = dataset.vectorSize
 opt.inputSize = dataset.inputSize
 local ShiftLearn = require('ShiftLearn')
 
+--------------------------------------------------------------------------------
+-- TODO should integrate these options nicely
 opt.separateValAddr = true
---opt.noInput = true 
---opt.backAddr = false   -- not ok, internal redundant dependency
-a = nn.Identity()()
-b = nn.Identity()()
---gogu = ShiftLearn.createWrapper(10)({a})
---fifi = nn.gModule({a}, {gogu})
---model = Model.create(opt, ShiftLearn.createWrapper, ShiftLearn.createWrapper,
-   --nn.Identity)
-model = Model.create(opt)
+opt.noInput = true 
+opt.noProb = true
+opt.simplified = true
+opt.supervised = true
+--------------------------------------------------------------------------------
+local model = Model.create(opt, ShiftLearn.createWrapper,
+   ShiftLearn.createWrapper, nn.Identity)
 
-
---gigi:forward({torch.zeros(1), torch.zeros(10)})
-
---local model = Model.create(opt, ShiftLearn.createWrapper(tonumber(opt.memorySize)))
---local model = Model.create(opt, gogu)
---model:forward(
-   --{torch.zeros(tonumber(opt.memorySize),tonumber(opt.vectorSize)),
-   --torch.zeros(tonumber(opt.vectorSize))})
-   
+--local model = Model.create(opt)
 
 ----xavier init
---local params, _ = model:parameters()
---for k,v in pairs(params) do
-    --local s = v:size()
-    --v:apply(function() return torch.normal(0,
-        --torch.sqrt(3 / s[#s])) end)
---end
+local params, _ = model:parameters()
+for k,v in pairs(params) do
+    local s = v:size()
+    v:apply(function() return torch.normal(0,
+        torch.sqrt(3 / s[#s])) end)
+end
 
 local mse = nn.MSECriterion()
 
 
---trainModel(model, mse, dataset, opt, optim.adam)
+trainModel(model, mse, dataset, opt, optim.adam)
 --evalModelSupervised(model, dataset, mse, opt)
 
 

@@ -177,13 +177,12 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                        cloneInputs[numIterations] = {memory, currentInput}
                     end
 
-                    if opt.backAddr then --propagating previous address
+                    if opt.simplified then --propagating previous address
                        cloneInputs[numIterations] = {memory, prevAddr}
                     end
-                    --print(cloneInputs[numIterations])
+
                     local output = clones[numIterations]:forward(
                         cloneInputs[numIterations])
-
 
                     cloneOutputs[numIterations] = output -- needed for Criterion
 
@@ -191,7 +190,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                        probabilities[numIterations] = output[#output]
                     end
 
-                    if opt.backAddr then
+                    if opt.simplified then
                        prevAddr = output[2]
                     end
                     ------------------------------------------------------------
@@ -214,7 +213,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     -- needed for backprop
                     memory = output[1]
                     inputsIndex = inputsIndex + 1
-                   
                 end
 
                 ----------------------------------------------------------------
@@ -223,7 +221,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
                 local err = 0
                 for j=#clones-1,1,-1 do
-
                     local currentOutput = cloneOutputs[j]
                     if opt.targetIndex ~= nil then
                         local ix = tonumber(opt.targetIndex)
@@ -244,11 +241,21 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     if opt.supervised then
                        t = targets[i][j] -- sequence of targets in supervised
                     end
-                    local currentErr = criterion:forward(currentOutput,t) 
-                    --{prob_target, targets[i]})
-                    local currentDf_do = criterion:backward(currentOutput,t)
-                     
-                    -- Are we only looking at a specific part of the memory?
+                    local toCriterion = currentOutput
+                    if opt.simplified then
+                       toCriterion = currentOutput[1]
+                    end
+                    --print(cloneInputs[1][1])
+                    --os.exit(-1)
+                    local currentErr = criterion:forward(toCriterion,t) 
+                    local currentDf_do = criterion:backward(toCriterion,t)
+                    if opt.simplified then
+                       local dfPrevAddr = torch.zeros(prevAddr:size())
+                       currentDf_do = {currentDf_do:clone(), dfPrevAddr}
+                    end
+
+                    -- TODO must concatenate derivatives with 0 for backward 
+                    --Looking at a specific part of the memory
                     if opt.targetIndex ~= nil then 
                         local memoryDev = torch.cat(currentDf_do[1]:reshape(1,
                         currentDf_do[1]:size(1)),
