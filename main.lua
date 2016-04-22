@@ -87,8 +87,20 @@ opt.inputSize = dataset.inputSize
 local ShiftLearn = require('ShiftLearn')
 
 opt.separateValAddr = true
-opt.noInput = false
-local model = Model.create(opt, ShiftLearn.createWrapper)
+opt.noInput = true 
+opt.backAddr = true
+a = nn.Identity()()
+b = nn.Identity()()
+--gogu = ShiftLearn.createWrapper(10)({a})
+--fifi = nn.gModule({a}, {gogu})
+model = Model.create(opt, ShiftLearn.createWrapper, ShiftLearn.createWrapper,
+   nn.Identity)
+
+
+--gigi:forward({torch.zeros(1), torch.zeros(10)})
+
+--local model = Model.create(opt, ShiftLearn.createWrapper(tonumber(opt.memorySize)))
+--local model = Model.create(opt, gogu)
 --model:forward(
    --{torch.zeros(tonumber(opt.memorySize),tonumber(opt.vectorSize)),
    --torch.zeros(tonumber(opt.vectorSize))})

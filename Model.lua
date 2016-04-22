@@ -1,11 +1,62 @@
 --------------------------------------------------------------------------------
--- File containing model definition
---------------------------------------------------------------------------------
-require "nn"
-require "rnn" 
+-- File containing model definition -------------------------------------------------------------------------------- require "nn" require "rnn" 
 require "nngraph"
 require "ShiftLearn"
+--nngraph.setDebug(true)
+--nngraph.annotateNodes()
 local Model = {}
+
+
+function Model.createDebug(opt, addressReader, addressWriter, valueWriter)
+   local vectorSize = tonumber(opt.vectorSize)
+   local memSize = tonumber(opt.memorySize)
+   local inputSize = 0
+   if not opt.noInput then
+      inputSize = tonumber(opt.inputSize)
+   end
+    
+   local RNN_steps = 5 --TODO add command line param
+
+   ----------------------------------------------------------------------------
+   --  Initial Memory
+   ----------------------------------------------------------------------------
+   --local initialMem = nil
+   --initialMem = nn.Identity()()
+   ----------------------------------------------------------------------------
+
+   ----------------------------------------------------------------------------
+   -- Input
+   ----------------------------------------------------------------------------
+   local input = nil
+   
+   if not opt.noInput then
+      input = nn.Identity()()
+   end
+   ----------------------------------------------------------------------------
+  
+   -----------------------------------------------------------------------------
+   -- Previous write address
+   -----------------------------------------------------------------------------
+   local prevWriteAddress = nn.Identity()()
+   
+   ----------------------------------------------------------------------------
+   --  Address Encoder
+   ----------------------------------------------------------------------------
+   --local reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
+   --TODO here comes custom address reader
+   params = {memSize * vectorSize, memSize, RNN_steps}
+   local dummyInput = nn.Identity()()
+   if addressReader then
+      AR = addressReader
+      params = {memSize}
+      linkedNode = {dummyInput, prevWriteAddress}
+   end
+   
+   local enc = addressReader({dummyInput, prevWriteAddress})
+   local address = nn.SoftMax()(enc)
+   return nn.gModule({dummyInput, prevWriteAddress}, {address})
+
+end
 
 function Model.create(opt, addressReader, addressWriter, valueWriter)
    local vectorSize = tonumber(opt.vectorSize)
@@ -14,7 +65,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    if not opt.noInput then
       inputSize = tonumber(opt.inputSize)
    end
-    
+   local dummyInput = nn.Identity()() 
    local RNN_steps = 5 --TODO add command line param
 
    ----------------------------------------------------------------------------
@@ -38,22 +89,22 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    -- Previous write address
    -----------------------------------------------------------------------------
    local prevWriteAddress = nn.Identity()()
-
+   
    ----------------------------------------------------------------------------
    --  Address Encoder
    ----------------------------------------------------------------------------
-   local reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
+   --local reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
    --TODO here comes custom address reader
    local AR = nn.GRU 
    params = {memSize * vectorSize, memSize, RNN_steps}
    linkedNode = reshapedMem
-
+   
    if addressReader then
       AR = addressReader
       params = {memSize}
-      linkedNode = {nn.Identity()(), prevWriteAddress}
+      linkedNode = {prevWriteAddress}
    end
-
+   
    local enc = AR(unpack(params))(linkedNode)
    local address = nn.SoftMax()(enc)
    ----------------------------------------------------------------------------
@@ -174,7 +225,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
       in_dict[#in_dict + 1] = prevWriteAddress
       out_dict[#out_dict + 1] = addrCalc
    end
-   
+   --in_dict[#in_dict + 1] = dummyInput 
    if opt.noProb then
       return nn.gModule(in_dict, out_dict)
    end

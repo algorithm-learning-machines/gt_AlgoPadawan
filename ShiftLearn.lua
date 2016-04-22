@@ -1,7 +1,8 @@
 require "torch"
 require "nn"
 require "nngraph"
-
+nngraph.setDebug(true)
+nngraph.annotateNodes()
 local class = require("class")
 
 
@@ -46,16 +47,18 @@ function ShiftGenerator.createWrapper(vecSize)
    -----------------------------------------------------------------------------
    -- Currently shift amount is constant
    -----------------------------------------------------------------------------
+   local shift_address = nn.Identity()()
+
    local dep_vec = torch.zeros(vecSize)
    dep_vec[1] = 1
-   local dep_constant = nn.Constant(dep_vec)()
-   local shift_address = nn.Identity()()
-   local shift_wrapper = shifter({dep_constant, shift_address})
-   --TODO this cannot work, references are weird!!! I need to use
-   --concat table like in the example
-   return nn.gModule({dep_constant, shift_address}, {shift_wrapper})
 
-   --return nn.gModule({dep_constant, shift_address}, {shift_wrapper})
+   local dep_constant = nn.Constant(dep_vec)(shift_address)
+
+   local shift_wrapper = shifter({dep_constant, shift_address})
+
+   --concat table like in the example
+   return nn.gModule({shift_address}, {shift_wrapper})
+
 end
 
 return ShiftGenerator 
