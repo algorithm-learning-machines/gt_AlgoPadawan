@@ -55,26 +55,29 @@ function evalModelSupervised(model, dataset, criterion, opt)
     local data = testSet[1]
     local labels = testSet[2]
     local errAvg = 0.0
+    local prevAdr = torch.zeros(opt.memorySize)
+    prevAdr[1] = 1
     for i=1,data:size(1) do
         local currentInstance = data[i]
         local numIterations = 1
         local memory = currentInstance
         local grandErr = 0.0
-        for j = 1,fixedSteps do
-            output = model:forward(memory)
-            print(output:size())
-            print(labels[i]:size())
-            err = criterion:forward(output, labels[i][j])
+        for j = 1,opt.maxForwardSteps do
+            output = model:forward({memory, prevAdr})
+            --print(output[1]:size())
+            --print(labels[i]:size())
+            err = criterion:forward(output[1], labels[i][j])
             grandErr = grandErr + err
             print("LABEL-------------")
             print(labels[i][j])
             print("OUTPUT------------")
-            print(output)
+            print(output[1])
             print("END---------------")
-            memory = output
+            prevArr = output[2]
+            memory = output[1]
         end
-        grandErr = grandErr / fixedSteps
-        local output = model:forward(currentInstance)
+        grandErr = grandErr / opt.maxForwardSteps 
+        --local output = model:forward(currentInstance)
         errAvg = errAvg + grandErr
     end
     ----------------------------------------------------------------------------

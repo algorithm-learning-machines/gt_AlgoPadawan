@@ -12,6 +12,7 @@ require 'nngraph'
 require 'rnn'
 require 'optim'
 require 'cutorch'
+require 'image'
 
 
 --------------------------------------------------------------------------------
@@ -55,8 +56,8 @@ print("Running training tests...")
 --------------------------------------------------------------------------------
 
 opt = {}
-opt.vectorSize = 15
-opt.trainSize = 1000
+opt.vectorSize = 20 
+opt.trainSize = 2000
 opt.testSize = 30
 opt.datasetType = 'repeat_k'
 opt.minVal = 1
@@ -86,7 +87,7 @@ cmd:option('-probabilityDiscount', "0.99", 'probability discount paralel \
 cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
-cmd:option('-plot', false, 'Should we plot errors during training')
+cmd:option('-plot', true, 'Should we plot errors during training')
 cmd:text()
 
 local opt = cmd:parse(arg)
@@ -121,6 +122,6 @@ end
 local mse = nn.MSECriterion()
 
 trainModel(model, mse, dataset, opt, optim.adam)
---evalModelSupervised(model, dataset, mse, opt)
+evalModelSupervised(model, dataset, mse, opt)
 
 

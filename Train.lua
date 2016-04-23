@@ -1,5 +1,3 @@
--- TODO: change [T]rain.lua to [t]rain.lua
-
 --------------------------------------------------------------------------------
 -- File containing Training definitions, for example Criterions,
 -- Custom optimizing procedures
@@ -216,6 +214,10 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     -- needed for backprop
                     memory = output[1]
                     inputsIndex = inputsIndex + 1
+                    -- not working
+                    --require 'image'
+                    --win_input = image.display{image=memory, win=win_input,
+                        --zoom=2, legend='input'}
                 end
 
                 ----------------------------------------------------------------
@@ -249,8 +251,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     if opt.simplified then
                        toCriterion = currentOutput[1]
                     end
-                    --print(cloneInputs[1][1])
-                    --os.exit(-1)
+
                     local currentErr = criterion:forward(toCriterion,t) 
                     local currentDf_do = criterion:backward(toCriterion,t)
                     if opt.simplified then
@@ -334,8 +335,6 @@ function cloneModel(model)
     local reader = torch.MemoryFile(mem:storage(), "r"):binary()
     local clone = reader:readObject()
     reader:close()
-
-    -- TODO: It would be nice to check this for nenea graf!
 
     if model.parameters then
         local cloneParams, cloneGradParams = clone:parameters()

@@ -209,7 +209,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
 
    -- memory update
    local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
-   local finMem = nn.CAddTable()({memEraser, adder})
+   local finMem = nn.Sigmoid()(nn.CAddTable()({memEraser, adder}))
    ----------------------------------------------------------------------------
 
    in_dict = {}
@@ -262,15 +262,15 @@ end
 --------------------------------------------------------------------------------
 function Model.saveModel(model, fileName, overWrite)
    --TODO remove hardcoding
-   if fileName == nil then
-      fileName = "autosave.model"
-   end
-   if (path.exists(fileName) and overWrite == false) then
-      print("file "..fileName.." already exists, overWrite option not specified. aborting.")
-      return false
-   end
-   torch.save(fileName, model)
-   print("Saved model!")
+   --if fileName == nil then
+      --fileName = "autosave.model"
+   --end
+   --if (path.exists(fileName) and overWrite == false) then
+      --print("file "..fileName.." already exists, overWrite option not specified. aborting.")
+      --return false
+   --end
+   --torch.save(fileName, model)
+   --print("Saved model!")
    return true
 end
 
