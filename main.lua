@@ -86,7 +86,7 @@ cmd:option('-probabilityDiscount', "0.99", 'probability discount paralel \
 cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
-cmd:option('-plot', true, 'Should we plot errors during training')
+cmd:option('-plot', false, 'Should we plot errors during training')
 cmd:text()
 
 local opt = cmd:parse(arg)

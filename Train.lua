@@ -1,3 +1,5 @@
+-- TODO: change [T]rain.lua to [t]rain.lua
+
 --------------------------------------------------------------------------------
 -- File containing Training definitions, for example Criterions,
 -- Custom optimizing procedures
@@ -199,7 +201,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                     ------------------------------------------------------------
                     if not opt.supervised then
                        if probabilities[numIterations][1] > 0.9 then
-                          terminated = true 
+                          terminated = true
                        end
                     end
                     numIterations = numIterations + 1
@@ -222,6 +224,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
                 local err = 0
                 for j=#clones-1,1,-1 do
+
                     local currentOutput = cloneOutputs[j]
                     if opt.targetIndex ~= nil then
                         local ix = tonumber(opt.targetIndex)
@@ -238,9 +241,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                      -- TODO for parallel criterion here
                     --local currentErr = criterion:forward({currentOutput,
                         --currentOutput[2]},
-                    local t = targets[i] 
+                    local t = targets[i]
                     if opt.supervised then
-                       print(j)
                        t = targets[i][j] -- sequence of targets in supervised
                     end
                     local toCriterion = currentOutput
@@ -256,7 +258,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                        currentDf_do = {currentDf_do:clone(), dfPrevAddr}
                     end
 
-                    -- TODO must concatenate derivatives with 0 for backward 
+
                     --Looking at a specific part of the memory
                     if opt.targetIndex ~= nil then 
                         local memoryDev = torch.cat(currentDf_do[1]:reshape(1,
@@ -332,6 +334,8 @@ function cloneModel(model)
     local reader = torch.MemoryFile(mem:storage(), "r"):binary()
     local clone = reader:readObject()
     reader:close()
+
+    -- TODO: It would be nice to check this for nenea graf!
 
     if model.parameters then
         local cloneParams, cloneGradParams = clone:parameters()

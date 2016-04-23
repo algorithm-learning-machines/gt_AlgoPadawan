@@ -7,21 +7,20 @@ local class = require("class")
 
 
 -- static class
-local ShiftGenerator = class("ShiftLearn")
+local ShiftLearn = class("ShiftLearn")
 
-function ShiftGenerator.create(vecSize)
+function ShiftLearn.create(vecSize)
 
    -----------------------------------------------------------------------------
    -- Input def
    -----------------------------------------------------------------------------
    local sh = nn.Identity()()
    local x = nn.Identity()()
-   --local x_sh = nn.JoinTable(1)({sh, x})
 
    -----------------------------------------------------------------------------
    -- Internal shift matrix
    -----------------------------------------------------------------------------
-   local learner2D = 
+   local learner2D =
       nn.Linear(vecSize, vecSize * vecSize)(sh)
 
    -----------------------------------------------------------------------------
@@ -36,13 +35,13 @@ function ShiftGenerator.create(vecSize)
 
 end
 
-function ShiftGenerator.createWrapper(vecSize)
+function ShiftLearn.createWrapper(vecSize)
    -- shift address input
 
    -----------------------------------------------------------------------------
    -- Internal shift generator
    -----------------------------------------------------------------------------
-   local shifter = ShiftGenerator.create(vecSize)
+   local shifter = ShiftLearn.create(vecSize)
 
    -----------------------------------------------------------------------------
    -- Currently shift amount is constant
@@ -56,9 +55,8 @@ function ShiftGenerator.createWrapper(vecSize)
 
    local shift_wrapper = shifter({dep_constant, shift_address})
 
-   --concat table like in the example
    return nn.gModule({shift_address}, {shift_wrapper})
 
 end
 
-return ShiftGenerator 
+return ShiftLearn

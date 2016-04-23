@@ -1,8 +1,8 @@
 --------------------------------------------------------------------------------
 -- File containing model definition --------------------------------------------
 --------------------------------------------------------------------------------
-require "nn" 
-require "rnn" 
+require "nn"
+require "rnn"
 require "nngraph"
 require "ShiftLearn"
 --nngraph.setDebug(true)
@@ -17,7 +17,7 @@ function Model.createDebug(opt, addressReader, addressWriter, valueWriter)
    if not opt.noInput then
       inputSize = tonumber(opt.inputSize)
    end
-    
+
    local RNN_steps = 5 --TODO add command line param
 
    ----------------------------------------------------------------------------
@@ -31,17 +31,17 @@ function Model.createDebug(opt, addressReader, addressWriter, valueWriter)
    -- Input
    ----------------------------------------------------------------------------
    local input = nil
-   
+
    if not opt.noInput then
       input = nn.Identity()()
    end
    ----------------------------------------------------------------------------
-  
+
    -----------------------------------------------------------------------------
    -- Previous write address
    -----------------------------------------------------------------------------
    local prevWriteAddress = nn.Identity()()
-   
+
    ----------------------------------------------------------------------------
    --  Address Encoder
    ----------------------------------------------------------------------------
@@ -54,14 +54,14 @@ function Model.createDebug(opt, addressReader, addressWriter, valueWriter)
       params = {memSize}
       linkedNode = {dummyInput, prevWriteAddress}
    end
-   
+
    local enc = addressReader({dummyInput, prevWriteAddress})
    local address = nn.SoftMax()(enc)
    return nn.gModule({dummyInput, prevWriteAddress}, {address})
 
 end
 
-   
+
 --------------------------------------------------------------------------------
 -- !! Order of modules at end
 -- [initialMem, input, prevAddrWrite] -> [finMem, addrCalc, p, pNRAM]
@@ -73,70 +73,69 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    if not opt.noInput then
       inputSize = tonumber(opt.inputSize)
    end
-   local dummyInput = nn.Identity()() 
+   local dummyInput = nn.Identity()()
    local RNN_steps = 5 --TODO add command line param
 
    ----------------------------------------------------------------------------
    --  Initial Memory
    ----------------------------------------------------------------------------
-   local initialMem = nil
-   initialMem = nn.Identity()()
+   local initialMem = nn.Identity()()
    ----------------------------------------------------------------------------
 
    ----------------------------------------------------------------------------
    -- Input
    ----------------------------------------------------------------------------
-   local input = nil
-   
+   local input
+
    if not opt.noInput then
       input = nn.Identity()()
    end
    ----------------------------------------------------------------------------
-  
+
    -----------------------------------------------------------------------------
    -- Previous write address
    -----------------------------------------------------------------------------
    local prevWriteAddress = nn.Identity()()
-   
+
    ----------------------------------------------------------------------------
    --  Address Encoder
    ----------------------------------------------------------------------------
-   local reshapedMem = nil 
+   local reshapedMem = nil
    if not addressReader then
       reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
    end
-   --TODO here comes custom address reader
-   local AR = nn.GRU 
+
+   local AR = nn.GRU
    params = {memSize * vectorSize, memSize, RNN_steps}
    linkedNode = reshapedMem
-   
+
    if addressReader then
       AR = addressReader
       params = {memSize}
       linkedNode = {prevWriteAddress}
    end
-   
+
    local enc = AR(unpack(params))(linkedNode)
    local address = nn.SoftMax()(enc)
-   ----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
 
 
-   ----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
    -- Value Extractor
-   ----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
 
    local addressTransp = nn.Reshape(1, memSize)(address)
-   local value = nn.MM()({addressTransp, initialMem})
-   ----------------------------------------------------------------------------
+   local value = nn.MM()({addressTransp, initialMem})     -- extract memory line
+   -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
    -- Next address calculator
    -----------------------------------------------------------------------------
-   local reshapedValue = nn.Squeeze(1)(value)
-   local inputValAddr = nil
-   local inputVal = nil
-   local inputAddr = nil
-   if opt.separateValAddr then
+   local reshapedValue = nn.Squeeze(1)(value)             -- a line should be 1D
+   local inputValAddr
+   local inputVal
+   local inputAddr
+   if opt.separateValAddr then                -- separate value and adress paths
       if opt.noInput then
          inputVal = reshapedValue
          inputAddr = address
@@ -144,8 +143,8 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
          inputVal = nn.JoinTable(1)({input, reshapedValue})
          inputAddr = nn.JoinTable(1)({input, address})
       end
-   else
-      if not pt.noInput then
+   else                                          -- cross value and adress paths
+      if not pt.noInput then                            -- TODO: invert if cases
          local auxJoin = nn.JoinTable(1)({input, address})
          inputVal = nn.JoinTable(1)({auxJoin, reshapedValue})
          inputAddr = inputVal
@@ -156,17 +155,16 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    end
 
    local AW = nn.GRU
-   
+
    params = {inputSize + memSize, memSize, RNN_steps}
    if not opt.separateValAddr then
       params = {inputSize + memSize + vectorSize, memSize, RNN_steps}
    end
 
    linkedNode = inputAddr
-   if addressWriter then -- kind of hardcoded momentarily
+   if addressWriter then
       AW = addressWriter
       params = {memSize}
-      --linkedNode = address
    end
 
    local addrCalc = AW(unpack(params))(linkedNode)
@@ -176,8 +174,8 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    ----------------------------------------------------------------------------
    -- Next value calculator
    ----------------------------------------------------------------------------
-   
-   -- TODO add custom value writer 
+
+   -- TODO add custom value writer
    local VW = nn.GRU
    params = {inputSize + vectorSize, vectorSize, RNN_steps}
 
@@ -189,7 +187,6 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    if valueWriter then
       VW = valueWriter
       params = {}
-      --linkedNode = nil
    end
 
    local valueCalc = VW(unpack(params))(linkedNode)
@@ -214,7 +211,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
    local finMem = nn.CAddTable()({memEraser, adder})
    ----------------------------------------------------------------------------
-   --TODO refacor rewrite dictionary 
+
    in_dict = {}
    out_dict = {}
    in_dict[#in_dict + 1] = initialMem
@@ -226,11 +223,11 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
       in_dict[#in_dict + 1] = prevWriteAddress
       out_dict[#out_dict + 1] = addrCalc
    end
-   --in_dict[#in_dict + 1] = dummyInput 
+
    if opt.noProb then
       return nn.gModule(in_dict, out_dict)
    end
-   
+
    -----------------------------------------------------------------------------
    -- Probability calculator
    -----------------------------------------------------------------------------
@@ -240,10 +237,10 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    --TODO maybe this could be generalized as well
    local h1 = nn.Linear(vectorSize + memSize + memSize * vectorSize, 10)
    (allInOne) -- hidden layer
-   
+
    local p = nn.Sigmoid()(nn.Linear(10, 1)(nn.Sigmoid()(nn.Linear(10, 10)(
    nn.Sigmoid()(h1)))))
-  
+
    out_dict[#out_dict + 1] = p
    -----------------------------------------------------------------------------
    -- NRAM probability calculator
