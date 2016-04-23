@@ -56,8 +56,8 @@ print("Running training tests...")
 --------------------------------------------------------------------------------
 
 opt = {}
-opt.vectorSize = 20 
-opt.trainSize = 2000
+opt.vectorSize = 15 
+opt.trainSize = 1000
 opt.testSize = 30
 opt.datasetType = 'repeat_k'
 opt.minVal = 1
@@ -120,8 +120,10 @@ for k,v in pairs(params) do
 end
 
 local mse = nn.MSECriterion()
+for i=0,4 do
+   trainModel(model, mse, dataset, opt, optim.adam)
+end
 
-trainModel(model, mse, dataset, opt, optim.adam)
 evalModelSupervised(model, dataset, mse, opt)
 
 

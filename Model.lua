@@ -5,8 +5,6 @@ require "nn"
 require "rnn"
 require "nngraph"
 require "ShiftLearn"
---nngraph.setDebug(true)
---nngraph.annotateNodes()
 local Model = {}
 
 
@@ -45,8 +43,8 @@ function Model.createDebug(opt, addressReader, addressWriter, valueWriter)
    ----------------------------------------------------------------------------
    --  Address Encoder
    ----------------------------------------------------------------------------
-   --local reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
-   --TODO here comes custom address reader
+   -- local reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
+
    params = {memSize * vectorSize, memSize, RNN_steps}
    local dummyInput = nn.Identity()()
    if addressReader then
