@@ -28,7 +28,7 @@ local AAT_M_t_1 = nn.MM()({resAddrCalc, AT_M_t_1})
 
 -- memory update
 local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
-local finMem = nn.CAddTable()({memEraser, adder})
+local finMem = nn.Sigmoid()(nn.CAddTable()({memEraser, adder}))
 
 
 local mod = nn.gModule({addrCalc, valueCalc, initialMem}, {finMem}) 

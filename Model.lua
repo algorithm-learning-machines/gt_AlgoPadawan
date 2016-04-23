@@ -207,7 +207,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
 
    -- memory update
    local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
-   local finMem = nn.Sigmoid()(nn.CAddTable()({memEraser, adder}))
+   local finMem = nn.CAddTable()({memEraser, adder})
    ----------------------------------------------------------------------------
 
    in_dict = {}

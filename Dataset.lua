@@ -302,13 +302,23 @@ function Dataset.__genRepeatK(setSize, vectorSize,
 
       inputOriginal[tostring(template)] = template
 
+      --local randomPart = torch.repeatTensor(torch.rand(1, vectorSize),
+         --memorySize - 1, 1)
+
+      local randomPart = torch.rand(memorySize - 1, vectorSize)
+
+      inputMemory = torch.cat(template:t(), randomPart, 1)
+      inputs[i] = inputMemory
+
       for j=1,repetitions do
          local outputRepeated = torch.repeatTensor(template:t(), j + 1, 1)
-         local zeroed = nil
+         local zeroed
 
          if j ~= memorySize then
-            zeroed = torch.repeatTensor(torch.zeros(1, vectorSize),
-            memorySize - j - 1, 1)
+            --zeroed = torch.repeatTensor(torch.zeros(1, vectorSize),
+            --memorySize - j - 1, 1)
+            --zeroed = torch.Tensor(memorySize - j - 1, vectorSize)
+            zeroed = randomPart[{{2, randomPart:size(1)}}]  
          end
 
          local outputMemory = nil
@@ -321,10 +331,9 @@ function Dataset.__genRepeatK(setSize, vectorSize,
          labels[i][j] = outputMemory
       end
 
-      local inputMemory = torch.repeatTensor(torch.zeros(1, vectorSize),
-      memorySize - 1, 1)
-      inputMemory = torch.cat(template:t(), inputMemory, 1)
-      inputs[i] = inputMemory
+      --local inputMemory = torch.repeatTensor(torch.zeros(1, vectorSize),
+      --memorySize - 1, 1)
+      
 
    end
    return {inputs, labels}, inputOriginal

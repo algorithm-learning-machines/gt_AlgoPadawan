@@ -67,7 +67,6 @@ opt.repetitions = 1
 local dataset = Dataset.create(opt) 
 
 
-
 local cmd = torch.CmdLine()
 cmd:text()
 cmd:text('Training a neural architecture to learn algorithms')
@@ -120,7 +119,7 @@ for k,v in pairs(params) do
 end
 
 local mse = nn.MSECriterion()
-for i=0,4 do
+for i=1,2 do
    trainModel(model, mse, dataset, opt, optim.adam)
 end
 
