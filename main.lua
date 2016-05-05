@@ -16,17 +16,18 @@ require 'image'
 
 
 --------------------------------------------------------------------------------
--- Command line options 
+-- Command line options
 --------------------------------------------------------------------------------
 Tensor = torch.DoubleTensor
+
 --------------------------------------------------------------------------------
 -- Internal modules
 --------------------------------------------------------------------------------
 require 'ModelUnitTests'
 require 'DataUnitTests'
 require 'TrainingUnitTests'
-Dataset = require("Dataset")
-Model = require("Model")
+local Dataset = require("Dataset")
+local Model = require("Model")
 require "Train"
 require "Evaluation"
 
@@ -34,9 +35,9 @@ require "Evaluation"
 -- Run unit Tests
 --------------------------------------------------------------------------------
 function runUnitTestSuite(testSuite)
-    for k,v in pairs(testSuite) do
-        print(k..v())
-    end
+   for k,v in pairs(testSuite) do
+      print(k..v())
+   end
 end
 
 print("Running model tests...")
@@ -55,16 +56,19 @@ print("Running training tests...")
 -- Create dataset
 --------------------------------------------------------------------------------
 
-opt = {}
-opt.vectorSize = 15 
-opt.trainSize = 1000
-opt.testSize = 30
-opt.datasetType = 'repeat_k'
-opt.minVal = 1
-opt.maxVal = 5000
-opt.memorySize = 20
-opt.repetitions = 1
-local dataset = Dataset.create(opt) 
+local datasetOpt = {}
+datasetOpt.vectorSize = 5
+datasetOpt.trainSize = 100
+datasetOpt.testSize = 30
+datasetOpt.datasetType = 'repeat_k'
+datasetOpt.minVal = 1
+datasetOpt.maxVal = 31
+datasetOpt.memorySize = 7
+datasetOpt.repetitions = 1
+
+assert(datasetOpt.maxVal < 2 ^ datasetOpt.vectorSize, "Vector size too small")
+
+local dataset = Dataset.create(datasetOpt)
 
 
 local cmd = torch.CmdLine()
@@ -74,22 +78,40 @@ cmd:text()
 cmd:text('Options')
 cmd:option('-trainFile','train.t7', 'filename of the training set')
 cmd:option('-testFile', 'test.t7', 'filename of the test set')
-cmd:option('-batchSize', '1', 'number of sequences to train in parallel')
-cmd:option('-memorySize', '20', 'number of entries in linear memory')
+cmd:option('-batchSize', 1, 'number of sequences to train in parallel')
+cmd:option('-epochs', 10, 'Number of training epochs')
+
+cmd:option('-memorySize', datasetOpt.memorySize,
+           'number of entries in linear memory')
+cmd:option('-zeroMemory', false, 'Fill unused memory with zeros')
 cmd:option('-useCuda', false, 'Should model use cuda')
 cmd:option('-noInput', true, 'Architecture used implies separate input')
 cmd:option('-maxForwardSteps', '1', 'maximum forward steps model makes')
-cmd:option('-saveEvery', 5, 'save model to file in training after this num')
+cmd:option('-saveEvery', 99999, 'save model to file in training after this num')
 cmd:option('-saveFile', "autosave.model", 'file to save model in ')
 cmd:option('-probabilityDiscount', "0.99", 'probability discount paralel \
     criterion')
 cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
+
+--------------------------------------------------------------------------------
+-- Plotting options
+--------------------------------------------------------------------------------
 cmd:option('-plot', true, 'Should we plot errors during training')
+cmd:option('-plotMemory', true, 'Should we plot memory during training')
+cmd:option('-plotAddress', true, 'Should we plot generated addresses')
+cmd:option('-plotParams', true, 'Should we plot weights during training')
+cmd:option('-sleep', 0, 'Should the beauty sleep?')
+
+--------------------------------------------------------------------------------
+-- Hacks section
+--------------------------------------------------------------------------------
+cmd:option("-giveMeModel", false, "Do not use this at home!")
+
 cmd:text()
 
-local opt = cmd:parse(arg)
+local opt = cmd:parse(arg or {})
 
 
 opt.vectorSize = dataset.vectorSize
@@ -100,7 +122,7 @@ local ShiftLearn = require('ShiftLearn')
 -- TODO should integrate these options nicely
 --------------------------------------------------------------------------------
 opt.separateValAddr = true
-opt.noInput = true 
+opt.noInput = true
 opt.noProb = true
 opt.simplified = true
 opt.supervised = true
@@ -110,6 +132,10 @@ opt.maxForwardSteps = dataset.repetitions
 local model = Model.create(opt, ShiftLearn.createWrapper,
    ShiftLearn.createWrapper, nn.Identity)
 
+if opt.giveMeModel then
+   return model
+end
+
 --xavier init
 local params, _ = model:parameters()
 for k,v in pairs(params) do
@@ -118,11 +144,68 @@ for k,v in pairs(params) do
         torch.sqrt(3 / s[#s])) end)
 end
 
+--------------------------------------------------------------------------------
+-- Display parameters before training
+--------------------------------------------------------------------------------
+
+local winsInitial = {}
+local params, _ = model:parameters()
+for k,v in pairs(params) do
+   if v:nDimension() == 1 then
+      winsInitial[k] = image.display{
+         image=v:view(1,-1),
+         win=winsInitial[k],
+         zoom=35,
+         legend = "initial bias " .. k
+      }
+   else
+      winsInitial[k] = image.display{
+         image=v,
+         win=winsInitial[k],
+         zoom=35,
+         legend = "initial params " .. k
+      }
+   end
+end
+
+--------------------------------------------------------------------------------
+-- Train the model
+--------------------------------------------------------------------------------
+
 local mse = nn.MSECriterion()
-for i=1,2 do
+for i=1,opt.epochs do
    trainModel(model, mse, dataset, opt, optim.adam)
+end
+
+--------------------------------------------------------------------------------
+-- Evaluate model
+--------------------------------------------------------------------------------
+if 202 ~= 202 then
+   return {["m"] = model, ["d"] = dataset}
 end
 
 evalModelSupervised(model, dataset, mse, opt)
 
+--------------------------------------------------------------------------------
+-- Display parameters after training
+--------------------------------------------------------------------------------
 
+local winsAfter = {}
+local params, _ = model:parameters()
+for k,v in pairs(params) do
+   if v:nDimension() == 1 then
+      winsAfter[k] = image.display{
+         image=v:view(1,-1),
+         win=winsAfter[k],
+         zoom=35,
+         legend = "after bias " .. k
+      }
+   else
+      winsAfter[k] = image.display{
+         image=v,
+         win=winsAfter[k],
+         zoom=35,
+         legend = "after params " .. k
+      }
+   end
+end

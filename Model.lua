@@ -54,7 +54,8 @@ function Model.createDebug(opt, addressReader, addressWriter, valueWriter)
    end
 
    local enc = addressReader({dummyInput, prevWriteAddress})
-   local address = nn.SoftMax()(enc)
+   --local address = nn.SoftMax()(enc)             -- Sharpening might be needed
+   local address = nn.Identity()(enc)
    return nn.gModule({dummyInput, prevWriteAddress}, {address})
 
 end
@@ -114,7 +115,8 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    end
 
    local enc = AR(unpack(params))(linkedNode)
-   local address = nn.SoftMax()(enc)
+   --   local address = nn.SoftMax()(enc)
+   local address = nn.Identity()(enc)
    -----------------------------------------------------------------------------
 
 
@@ -142,7 +144,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
          inputAddr = nn.JoinTable(1)({input, address})
       end
    else                                          -- cross value and adress paths
-      if not pt.noInput then                            -- TODO: invert if cases
+      if not opt.noInput then                           -- TODO: invert if cases
          local auxJoin = nn.JoinTable(1)({input, address})
          inputVal = nn.JoinTable(1)({auxJoin, reshapedValue})
          inputAddr = inputVal

@@ -13,7 +13,7 @@ function Dataset:getNextBatch(batchSize)
    if (self.batchIndex + batchSize - 1 > self.trainSize) then
       return nil
    end
-   local args_input = {}  
+   local args_input = {}
    local args_lable = {}
    args_input[1] = batchSize
    args_lable[1] = batchSize
@@ -35,6 +35,9 @@ function Dataset:getNextBatch(batchSize)
 
    self.batchIndex = self.batchIndex + batchSize
 
+   print(#batch)
+   print(batch[1]:size())
+   print(batch[2]:size())
    return batch
 
 end
@@ -294,11 +297,13 @@ function Dataset.__genRepeatK(setSize, vectorSize,
       local template = Dataset.__numToBits(torch.random(minVal, maxVal),
       vectorSize)
 
+      --[[
       while (inputOriginal[tostring(template)] ~= nil) or
          (exclusionSet[tostring(template)] ~= nil) do
          template = Dataset.__numToBits(torch.random(minVal, maxVal),
          vectorSize)
       end
+      --]]
 
       inputOriginal[tostring(template)] = template
 
@@ -318,7 +323,7 @@ function Dataset.__genRepeatK(setSize, vectorSize,
             --zeroed = torch.repeatTensor(torch.zeros(1, vectorSize),
             --memorySize - j - 1, 1)
             --zeroed = torch.Tensor(memorySize - j - 1, vectorSize)
-            zeroed = randomPart[{{2, randomPart:size(1)}}]  
+            zeroed = randomPart[{{2, randomPart:size(1)}}]
          end
 
          local outputMemory = nil
@@ -333,7 +338,7 @@ function Dataset.__genRepeatK(setSize, vectorSize,
 
       --local inputMemory = torch.repeatTensor(torch.zeros(1, vectorSize),
       --memorySize - 1, 1)
-      
+
 
    end
    return {inputs, labels}, inputOriginal
@@ -359,4 +364,3 @@ function Dataset.__numToBits(num, bits)
 end
 
 return Dataset
-
