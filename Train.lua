@@ -3,7 +3,7 @@
 -- Custom optimizing procedures
 --------------------------------------------------------------------------------
 require 'gnuplot'
-require 'image'
+--require 'image'
 
 
 --------------------------------------------------------------------------------
@@ -219,8 +219,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                ------------------------------------------------------------
                -- Remember models and their respective inputs
                ------------------------------------------------------------
-               -- DANGEROUS: Uncomment this!
-               -- clones[numIterations] = cloneModel(model) -- clone model
+                clones[numIterations] = cloneModel(model) -- clone model
 
                -- needed for backprop
                memory = output[1]
@@ -236,7 +235,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             local err = 0
 
             for j=#clones-1,1,-1 do
-
                local currentOutput = cloneOutputs[j]
                if opt.targetIndex ~= nil then
                   local ix = tonumber(opt.targetIndex)

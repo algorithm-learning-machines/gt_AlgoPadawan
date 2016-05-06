@@ -63,8 +63,8 @@ datasetOpt.testSize = 30
 datasetOpt.datasetType = 'repeat_k'
 datasetOpt.minVal = 1
 datasetOpt.maxVal = 31
-datasetOpt.memorySize = 7
-datasetOpt.repetitions = 1
+datasetOpt.memorySize = 5
+datasetOpt.repetitions = 2
 
 assert(datasetOpt.maxVal < 2 ^ datasetOpt.vectorSize, "Vector size too small")
 
@@ -79,7 +79,7 @@ cmd:text('Options')
 cmd:option('-trainFile','train.t7', 'filename of the training set')
 cmd:option('-testFile', 'test.t7', 'filename of the test set')
 cmd:option('-batchSize', 1, 'number of sequences to train in parallel')
-cmd:option('-epochs', 10, 'Number of training epochs')
+cmd:option('-epochs', 40, 'Number of training epochs')
 
 cmd:option('-memorySize', datasetOpt.memorySize,
            'number of entries in linear memory')
@@ -148,25 +148,25 @@ end
 -- Display parameters before training
 --------------------------------------------------------------------------------
 
-local winsInitial = {}
-local params, _ = model:parameters()
-for k,v in pairs(params) do
-   if v:nDimension() == 1 then
-      winsInitial[k] = image.display{
-         image=v:view(1,-1),
-         win=winsInitial[k],
-         zoom=35,
-         legend = "initial bias " .. k
-      }
-   else
-      winsInitial[k] = image.display{
-         image=v,
-         win=winsInitial[k],
-         zoom=35,
-         legend = "initial params " .. k
-      }
-   end
-end
+--local winsInitial = {}
+--local params, _ = model:parameters()
+--for k,v in pairs(params) do
+   --if v:nDimension() == 1 then
+      --winsInitial[k] = image.display{
+         --image=v:view(1,-1),
+         --win=winsInitial[k],
+         --zoom=35,
+         --legend = "initial bias " .. k
+      --}
+   --else
+      --winsInitial[k] = image.display{
+         --image=v,
+         --win=winsInitial[k],
+         --zoom=35,
+         --legend = "initial params " .. k
+      --}
+   --end
+--end
 
 --------------------------------------------------------------------------------
 -- Train the model
@@ -180,9 +180,9 @@ end
 --------------------------------------------------------------------------------
 -- Evaluate model
 --------------------------------------------------------------------------------
-if 202 ~= 202 then
-   return {["m"] = model, ["d"] = dataset}
-end
+--if 202 ~= 202 then
+   --return {["m"] = model, ["d"] = dataset}
+--end
 
 evalModelSupervised(model, dataset, mse, opt)
 
@@ -190,22 +190,22 @@ evalModelSupervised(model, dataset, mse, opt)
 -- Display parameters after training
 --------------------------------------------------------------------------------
 
-local winsAfter = {}
-local params, _ = model:parameters()
-for k,v in pairs(params) do
-   if v:nDimension() == 1 then
-      winsAfter[k] = image.display{
-         image=v:view(1,-1),
-         win=winsAfter[k],
-         zoom=35,
-         legend = "after bias " .. k
-      }
-   else
-      winsAfter[k] = image.display{
-         image=v,
-         win=winsAfter[k],
-         zoom=35,
-         legend = "after params " .. k
-      }
-   end
-end
+--local winsAfter = {}
+--local params, _ = model:parameters()
+--for k,v in pairs(params) do
+   --if v:nDimension() == 1 then
+      --winsAfter[k] = image.display{
+         --image=v:view(1,-1),
+         --win=winsAfter[k],
+         --zoom=35,
+         --legend = "after bias " .. k
+      --}
+   --else
+      --winsAfter[k] = image.display{
+         --image=v,
+         --win=winsAfter[k],
+         --zoom=35,
+         --legend = "after params " .. k
+      --}
+   --end
+--end

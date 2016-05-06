@@ -323,7 +323,8 @@ function Dataset.__genRepeatK(setSize, vectorSize,
             --zeroed = torch.repeatTensor(torch.zeros(1, vectorSize),
             --memorySize - j - 1, 1)
             --zeroed = torch.Tensor(memorySize - j - 1, vectorSize)
-            zeroed = randomPart[{{2, randomPart:size(1)}}]
+            --print(randomPart)
+            zeroed = randomPart[{{j + 1, randomPart:size(1)}}]
          end
 
          local outputMemory = nil
@@ -332,7 +333,7 @@ function Dataset.__genRepeatK(setSize, vectorSize,
          else
             outputMemory = outputRepeated
          end
-
+         print(outputMemory)
          labels[i][j] = outputMemory
       end
 
