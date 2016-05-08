@@ -124,7 +124,7 @@ local ShiftLearn = require('ShiftLearn')
 opt.separateValAddr = true
 opt.noInput = true
 opt.noProb = true
-opt.simplified = true
+opt.simplified = true 
 opt.supervised = true
 opt.maxForwardSteps = dataset.repetitions
 --------------------------------------------------------------------------------
