@@ -41,11 +41,11 @@ function runUnitTestSuite(testSuite)
 end
 
 print("Running model tests...")
---runUnitTestSuite(modelTests)
+runUnitTestSuite(modelTests)
 print("Running data tests...")
---runUnitTestSuite(dataTests)
+runUnitTestSuite(dataTests)
 print("Running training tests...")
---runUnitTestSuite(trainingTests)
+runUnitTestSuite(trainingTests)
 
 --------------------------------------------------------------------------------
 -- Train on repeat-once dataset
@@ -79,7 +79,7 @@ cmd:text('Options')
 cmd:option('-trainFile','train.t7', 'filename of the training set')
 cmd:option('-testFile', 'test.t7', 'filename of the test set')
 cmd:option('-batchSize', 5, 'number of sequences to train in parallel')
-cmd:option('-epochs', 15, 'Number of training epochs')
+cmd:option('-epochs', 30, 'Number of training epochs')
 
 cmd:option('-memorySize', datasetOpt.memorySize,
            'number of entries in linear memory')
