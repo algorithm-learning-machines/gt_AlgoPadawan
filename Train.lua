@@ -184,7 +184,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                   currentInput = torch.zeros(inputs[i][1]:size())
                end
                if opt.noInput then
-                  cloneInputs[numIterations] = memory--memory?
+                  cloneInputs[numIterations] = memory
                else
                   cloneInputs[numIterations] = {memory, currentInput}
                end
@@ -192,7 +192,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                if opt.simplified then --propagating previous address
                   cloneInputs[numIterations] = {memory, prevAddr}
                end
-
                local output = clones[numIterations]:forward(
                   cloneInputs[numIterations])
 
@@ -222,7 +221,12 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 clones[numIterations] = cloneModel(model) -- clone model
 
                -- needed for backprop
-               memory = output[1]
+               --TODO here used to be output[1]
+               if not opt.simplified and opt.noInput and opt.noProb then
+                  memory = output
+               else
+                  memory = output[1]
+               end
 
                inputsIndex = inputsIndex + 1
 

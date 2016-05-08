@@ -41,11 +41,11 @@ function runUnitTestSuite(testSuite)
 end
 
 print("Running model tests...")
-runUnitTestSuite(modelTests)
+--runUnitTestSuite(modelTests)
 print("Running data tests...")
-runUnitTestSuite(dataTests)
+--runUnitTestSuite(dataTests)
 print("Running training tests...")
-runUnitTestSuite(trainingTests)
+--runUnitTestSuite(trainingTests)
 
 --------------------------------------------------------------------------------
 -- Train on repeat-once dataset
@@ -121,7 +121,7 @@ local ShiftLearn = require('ShiftLearn')
 --------------------------------------------------------------------------------
 -- TODO should integrate these options nicely
 --------------------------------------------------------------------------------
-opt.separateValAddr = true
+opt.separateValAddr = true 
 opt.noInput = true
 opt.noProb = true
 opt.simplified = true 
@@ -131,6 +131,8 @@ opt.maxForwardSteps = dataset.repetitions
 
 local model = Model.create(opt, ShiftLearn.createWrapper,
    ShiftLearn.createWrapper, nn.Identity)
+
+--model = Model.create(opt)
 
 if opt.giveMeModel then
    return model

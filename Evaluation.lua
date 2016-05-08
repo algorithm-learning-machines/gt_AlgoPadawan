@@ -63,6 +63,7 @@ function evalModelSupervised(model, dataset, criterion, opt)
         local memory = currentInstance
         local grandErr = 0.0
         for j = 1,opt.maxForwardSteps do
+            
             output = model:forward({memory, prevAdr})
             --print(output[1]:size())
             --print(labels[i]:size())
