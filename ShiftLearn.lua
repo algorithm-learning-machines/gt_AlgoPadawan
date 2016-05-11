@@ -20,7 +20,8 @@ function ShiftLearn.create(vecSize)
    -----------------------------------------------------------------------------
    -- Internal shift matrix
    -----------------------------------------------------------------------------
-   local learner2D = nn.Linear(vecSize, vecSize * vecSize)(sh)
+   -- false refers to the fact that we DO NOT want bias
+   local learner2D = nn.Linear(vecSize, vecSize * vecSize, false)(sh)
 
    -----------------------------------------------------------------------------
    -- Shifted Tensor

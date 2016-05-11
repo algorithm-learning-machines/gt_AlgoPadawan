@@ -2,8 +2,11 @@
 -- File containing Training definitions, for example Criterions,
 -- Custom optimizing procedures
 --------------------------------------------------------------------------------
+
 require 'gnuplot'
---require 'image'
+require 'image'
+locales = {'en_US.UTF-8'}
+os.setlocale(locales[1])
 
 
 --------------------------------------------------------------------------------
@@ -279,11 +282,13 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                ------------------------------------------------------------
                -- Output derivatives
                ------------------------------------------------------------
+               --
                clones[j]:backward(cloneInputs[i], currentDf_do)
-               --[[
+               
 
                -- TODO make them local
-               if opt.plotMemory then
+
+               if opt.plotMemory and false then
                   winInput = image.display{
                      image=toCriterion, win=winInput,
                      zoom=100, legend='produced memory'
@@ -293,79 +298,82 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                      zoom=100, legend='target memory'
                   }
                end
-               local a,_ = model:parameters()
-               a[1]:add(torch.rand(a[1]:size()))
-               a[2]:add(torch.rand(a[2]:size()))
-               a[3]:add(torch.rand(a[3]:size()))
-               a[4]:add(torch.rand(a[4]:size()))
+               --local a,_ = model:parameters()
+               --a[1]:add(torch.rand(a[1]:size()))
+               --a[2]:add(torch.rand(a[2]:size()))
+               --a[3]:add(torch.rand(a[3]:size()))
+               --a[4]:add(torch.rand(a[4]:size()))
+               --x = torch.linspace(-2 * math.pi, 2 * math.pi)
+               --gnuplot.plot(torch.sin(x))
 
-               if opt.plotParams then
-                  for i,v in pairs(model:findModules("nn.Linear")) do
+               if opt.plotParams and false then
+                  for r,v in pairs(model:findModules("nn.Linear")) do
                      --v:updateParameters(0.4)
-                     winsParams[i] = image.display{
+                     winsParams[r] = image.display{
                         image=v:parameters()[1],
-                        win=winsParams[i],
+                        win=winsParams[r],
                         zoom=35,
-                        legend = "params " .. i
+                        legend = "params " .. r
                      }
                   end
                end
 
-               if opt.plotParams then
-                  for i,v in pairs(model:findModules("nn.Linear")) do
+               if opt.plotParams and false then
+                  for r,v in pairs(model:findModules("nn.Linear")) do
                      local _, gP = v:parameters()
-                     winsGradParams[i] = image.display{
+                     winsGradParams[r] = image.display{
                         image=gP[1],
-                        win=winsGradParams[i],
+                        win=winsGradParams[r],
                         zoom=35,
-                        legend = "grad_params " .. i
+                        legend = "grad_params " .. r
                      }
                   end
                end
 
                -- plot bias in linear
-               if opt.plotParams then
-                  for i,v in pairs(model:findModules("nn.Linear")) do
-                     winsParamsBias[i] = image.display{
-                        image=v:parameters()[2]:view(1,-1),
-                        win=winsParamsBias[i],
-                        zoom=35,
-                        legend = "params bias" .. i
-                     }
-                  end
-               end
+               --if opt.plotParams then
+                  --for i,v in pairs(model:findModules("nn.Linear")) do
+                     --winsParamsBias[i] = image.display{
+                        --image=v:parameters()[2]:view(1,-1),
+                        --win=winsParamsBias[i],
+                        --zoom=35,
+                        --legend = "params bias" .. i
+                     --}
+                  --end
+               --end
 
                -- plot gradients for bias in linear
-               if opt.plotParams then
-                  for i,v in pairs(model:findModules("nn.Linear")) do
-                     local _, gP = v:parameters()
-                     winsGradParamsBias[i] = image.display{
-                        image=gP[2]:view(1,-1),
-                        win=winsGradParamsBias[i],
-                        zoom=35,
-                        legend = "grad_params bias" .. i
-                     }
-                  end
-               end
+               --if opt.plotParams then
+                  --for i,v in pairs(model:findModules("nn.Linear")) do
+                     --local _, gP = v:parameters()
+                     --winsGradParamsBias[i] = image.display{
+                        --image=gP[2]:view(1,-1),
+                        --win=winsGradParamsBias[i],
+                        --zoom=35,
+                        --legend = "grad_params bias" .. i
+                     --}
+                  --end
+               --end
 
                -- plot output of softmax units
-               if opt.plotAddress then
-                  for i,v in pairs(model:findModules("nn.SoftMax")) do
+               if opt.plotAddress and false then
+                  for r,v in pairs(model:findModules("nn.SoftMax")) do
                      winsAddress[i] = image.display{
                         image=v.output:view(1,-1),
-                        win=winsAddress[i],
+                        win=winsAddress[r],
                         zoom=100,
-                        legend = "softmax " .. i
+                        legend = "softmax " .. r
                      }
                   end
                end
 
-               for i,v in pairs(model:findModules("nn.Linear")) do
-                  local _, gP = v:parameters()
-                  print(gP[1])
-                  print(gradParameters)
+               for r,v in pairs(model:findModules("nn.Linear")) do
+                  local p, gP = v:parameters()
+                  print(p[1])
+                  --print(gP[1])
+                  --print(gradParameters)
                end
-                --]]
+                
 
 
                err = err + currentErr

@@ -174,7 +174,7 @@ end
 
 local mse = nn.MSECriterion()
 for i=1,opt.epochs do
-   trainModel(model, mse, dataset, opt, optim.adam)
+   trainModel(model, mse, dataset, opt, optim.sgd)
 end
 
 --------------------------------------------------------------------------------
