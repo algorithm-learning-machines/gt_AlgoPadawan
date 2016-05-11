@@ -78,8 +78,8 @@ cmd:text()
 cmd:text('Options')
 cmd:option('-trainFile','train.t7', 'filename of the training set')
 cmd:option('-testFile', 'test.t7', 'filename of the test set')
-cmd:option('-batchSize', 1, 'number of sequences to train in parallel')
-cmd:option('-epochs', 40, 'Number of training epochs')
+cmd:option('-batchSize', 5, 'number of sequences to train in parallel')
+cmd:option('-epochs', 30, 'Number of training epochs')
 
 cmd:option('-memorySize', datasetOpt.memorySize,
            'number of entries in linear memory')
@@ -121,16 +121,18 @@ local ShiftLearn = require('ShiftLearn')
 --------------------------------------------------------------------------------
 -- TODO should integrate these options nicely
 --------------------------------------------------------------------------------
-opt.separateValAddr = true
+opt.separateValAddr = true 
 opt.noInput = true
 opt.noProb = true
-opt.simplified = true
+opt.simplified = true 
 opt.supervised = true
 opt.maxForwardSteps = dataset.repetitions
 --------------------------------------------------------------------------------
 
 local model = Model.create(opt, ShiftLearn.createWrapper,
    ShiftLearn.createWrapper, nn.Identity)
+
+--model = Model.create(opt)
 
 if opt.giveMeModel then
    return model
@@ -174,16 +176,12 @@ end
 
 local mse = nn.MSECriterion()
 for i=1,opt.epochs do
-   trainModel(model, mse, dataset, opt, optim.sgd)
+   trainModel(model, mse, dataset, opt, optim.adam)
 end
 
 --------------------------------------------------------------------------------
 -- Evaluate model
 --------------------------------------------------------------------------------
---if 202 ~= 202 then
-   --return {["m"] = model, ["d"] = dataset}
---end
-
 evalModelSupervised(model, dataset, mse, opt)
 
 --------------------------------------------------------------------------------

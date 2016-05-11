@@ -250,6 +250,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
       local prevDelta = nn.Identity()()
       local pNRAM = nn.MM()({nn.Reshape(1,1)(p), nn.Reshape(1,1)(prevDelta)})
       out_dict[#out_dict + 1] = pNRAM
+      in_dict[#in_dict + 1] = prevDelta
    end
    ----------------------------------------------------------------------------
 
@@ -262,15 +263,15 @@ end
 --------------------------------------------------------------------------------
 function Model.saveModel(model, fileName, overWrite)
    --TODO remove hardcoding
-   --if fileName == nil then
-      --fileName = "autosave.model"
-   --end
-   --if (path.exists(fileName) and overWrite == false) then
-      --print("file "..fileName.." already exists, overWrite option not specified. aborting.")
-      --return false
-   --end
-   --torch.save(fileName, model)
-   --print("Saved model!")
+   if fileName == nil then
+      fileName = "autosave.model"
+   end
+   if (path.exists(fileName) and overWrite == false) then
+      print("file "..fileName.." already exists, overWrite option not specified. aborting.")
+      return false
+   end
+   torch.save(fileName, model)
+   print("Saved model!")
    return true
 end
 

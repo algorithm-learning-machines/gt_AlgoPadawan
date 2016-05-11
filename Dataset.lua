@@ -35,9 +35,6 @@ function Dataset:getNextBatch(batchSize)
 
    self.batchIndex = self.batchIndex + batchSize
 
-   print(#batch)
-   print(batch[1]:size())
-   print(batch[2]:size())
    return batch
 
 end
@@ -333,7 +330,6 @@ function Dataset.__genRepeatK(setSize, vectorSize,
          else
             outputMemory = outputRepeated
          end
-         print(outputMemory)
          labels[i][j] = outputMemory
       end
 
