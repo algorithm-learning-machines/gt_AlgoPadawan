@@ -373,7 +373,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
                for r,v in pairs(model:findModules("nn.Linear")) do
                   local p, gP = v:parameters()
-                  print(p[1])
+                  --print(p[1])
                   --print(gP[1])
                   --print(gradParameters)
                end
@@ -389,7 +389,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             if opt.sleep then sys.sleep(tonumber(opt.sleep)) end
          end
 
-         print("GRADIENTUL ADUNAT: " .. gradParameters:clone():abs():sum())
+         --print("GRADIENTUL ADUNAT: " .. gradParameters:clone():abs():sum())
 
          -- normalize gradients and f(X)
          gradParameters:div(#inputs)
@@ -401,10 +401,10 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
       -- optimize on current mini-batch
       if optimMethod == optim.asgd then
-         print('ce as vrea sa ma optimizez!')
+         --print('ce as vrea sa ma optimizez!')
          _, _, average = optimMethod(feval, parameters, optimState)
       else
-         print('ma optimizez!')
+         --print('ma optimizez!')
          optimMethod(feval, parameters, optimState)
       end
       if opt.saveEvery ~= nil and learnIterations % opt.saveEvery == 0 then

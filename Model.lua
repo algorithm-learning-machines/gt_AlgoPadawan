@@ -5,6 +5,7 @@ require "nn"
 require "rnn"
 require "nngraph"
 require "ShiftLearn"
+require "CustomSharpeners"
 local Model = {}
 
 
@@ -54,8 +55,8 @@ function Model.createDebug(opt, addressReader, addressWriter, valueWriter)
    end
 
    local enc = addressReader({dummyInput, prevWriteAddress})
-   --local address = nn.SoftMax()(enc)             -- Sharpening might be needed
-   local address = nn.Identity()(enc)
+   local address = nn.MulSoftMax()(enc)             -- Sharpening might be needed
+   --local address = nn.Identity()(enc)
    return nn.gModule({dummyInput, prevWriteAddress}, {address})
 
 end
@@ -115,8 +116,8 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
    end
 
    local enc = AR(unpack(params))(linkedNode)
-   --   local address = nn.SoftMax()(enc)
-   local address = nn.Identity()(enc)
+   local address = nn.MulSoftMax()(enc)
+   --local address = nn.Identity()(enc)
    -----------------------------------------------------------------------------
 
 
