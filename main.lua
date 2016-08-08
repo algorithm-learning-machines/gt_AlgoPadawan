@@ -94,7 +94,7 @@ cmd:option('-probabilityDiscount', "0.99", 'probability discount paralel \
 cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
-
+cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------
@@ -103,7 +103,6 @@ cmd:option('-plotMemory', true, 'Should we plot memory during training')
 cmd:option('-plotAddress', true, 'Should we plot generated addresses')
 cmd:option('-plotParams', true, 'Should we plot weights during training')
 cmd:option('-sleep', 0, 'Should the beauty sleep?')
-
 --------------------------------------------------------------------------------
 -- Hacks section
 --------------------------------------------------------------------------------
@@ -130,7 +129,7 @@ opt.maxForwardSteps = dataset.repetitions
 --------------------------------------------------------------------------------
 
 local model = Model.create(opt, ShiftLearn.createWrapper,
-   ShiftLearn.createWrapper, nn.Identity)
+   ShiftLearn.createWrapper, nn.Identity, "modelName")
 
 --model = Model.create(opt)
 
@@ -170,19 +169,24 @@ end
    --end
 --end
 
+model.modelName = "firstModel"
+
 --------------------------------------------------------------------------------
 -- Train the model
 --------------------------------------------------------------------------------
 
 local mse = nn.MSECriterion()
 for i=1,opt.epochs do
+   model.itNum = i
    trainModel(model, mse, dataset, opt, optim.adam)
+   evalModelSupervised(model, dataset, mse, opt)
 end
 
 --------------------------------------------------------------------------------
 -- Evaluate model
 --------------------------------------------------------------------------------
-evalModelSupervised(model, dataset, mse, opt)
+--for i=1,opt.eval_episodes do
+--end
 
 --------------------------------------------------------------------------------
 -- Display parameters after training

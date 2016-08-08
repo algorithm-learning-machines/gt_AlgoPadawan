@@ -20,8 +20,7 @@ function Model.createDebug(opt, addressReader, addressWriter, valueWriter)
    local RNN_steps = 5 --TODO add command line param
 
    ----------------------------------------------------------------------------
-   --  Initial Memory
-   ----------------------------------------------------------------------------
+   --  Initial Memory ----------------------------------------------------------------------------
    --local initialMem = nil
    --initialMem = nn.Identity()()
    ----------------------------------------------------------------------------
@@ -66,13 +65,17 @@ end
 -- !! Order of modules at end
 -- [initialMem, input, prevAddrWrite] -> [finMem, addrCalc, p, pNRAM]
 --------------------------------------------------------------------------------
-function Model.create(opt, addressReader, addressWriter, valueWriter)
+function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
    local vectorSize = tonumber(opt.vectorSize)
    local memSize = tonumber(opt.memorySize)
+   if not modelName then
+      modelName = "default"
+   end
    local inputSize = 0
    if not opt.noInput then
       inputSize = tonumber(opt.inputSize)
    end
+
    local dummyInput = nn.Identity()()
    local RNN_steps = 5 --TODO add command line param
 
@@ -254,8 +257,9 @@ function Model.create(opt, addressReader, addressWriter, valueWriter)
       in_dict[#in_dict + 1] = prevDelta
    end
    ----------------------------------------------------------------------------
+   local res = nn.gModule(in_dict, out_dict)
 
-   return nn.gModule(in_dict, out_dict)
+   return res 
 end
 
 --------------------------------------------------------------------------------

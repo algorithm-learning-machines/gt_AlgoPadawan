@@ -30,10 +30,10 @@ function evalModelOnDataset(model, dataset, criterion)
             numIterations = numIterations + 1
             finalOutput = output
         end
-        print("final output")
-        print(finalOutput[1])
-        print("label")
-        print(labels[i])
+        --print("final output")
+        --print(finalOutput[1])
+        --print("label")
+        --print(labels[i])
 
         err = criterion:forward(finalOutput, labels[i])
         errAvg = errAvg + err
@@ -65,27 +65,31 @@ function evalModelSupervised(model, dataset, criterion, opt)
         for j = 1,opt.maxForwardSteps do
             
             output = model:forward({memory, prevAdr})
-            --print(output[1]:size())
-            --print(labels[i]:size())
             err = criterion:forward(output[1], labels[i][j])
             grandErr = grandErr + err
-            print("LABEL-------------")
-            print(labels[i][j])
-            print("OUTPUT------------")
-            print(output[1])
-            print("END---------------")
+            --print("LABEL-------------")
+            --print(labels[i][j])
+            --print("OUTPUT------------")
+            --print(output[1])
+            --print("END---------------")
             prevArr = output[2]
             memory = output[1]
         end
         grandErr = grandErr / opt.maxForwardSteps 
-        --local output = model:forward(currentInstance)
         errAvg = errAvg + grandErr
     end
+
     ----------------------------------------------------------------------------
     -- Average error
     ----------------------------------------------------------------------------
     errAvg = errAvg / data:size(1)
-    print("Error in evaluation "..errAvg)
+    --print("Error in evaluation "..errAvg)
+    -- add errors to file
+    local file = io.open("_eval_errors_" .. model.modelName, 'a')
+    io.output(file)
+    io.write(tostring(errAvg) .. "\n")
+    io.output(io.stdout)
+    io.close(file)
 end
 
 
@@ -94,27 +98,26 @@ end
 -- Evaluate a model trained on a certain dataset, supervised, single step
 --------------------------------------------------------------------------------
 function evalModelOnDatasetNoProb(model, dataset, criterion)
-    local testSet = dataset.testSet
-    local data = testSet[1]
-    local labels = testSet[2]
-    local errAvg = 0.0
-    for i=1,data:size(1) do
-        local currentInstance = data[i]
-        local terminated = false
-        local numIterations = 0
-        local memory = currentInstance
-        local output = model:forward(currentInstance)
-        print("LABEL-------------")
-        print(labels[i])
-        print("OUTPUT------------")
-        print(output)
-        print("END---------------")
-        err = criterion:forward(output, labels[i])
-        errAvg = errAvg + err
-    end
-    ----------------------------------------------------------------------------
-    -- Average error
-    ----------------------------------------------------------------------------
-    errAvg = errAvg / data:size(1)
-    print("Error in evaluation "..errAvg)
+   local testSet = dataset.testSet
+   local data = testSet[1]
+   local labels = testSet[2]
+   local errAvg = 0.0
+   for i=1,data:size(1) do
+      local currentInstance = data[i]
+      local terminated = false
+      local numIterations = 0
+      local memory = currentInstance
+      local output = model:forward(currentInstance)
+      print("LABEL-------------")
+      print(labels[i])
+      print("OUTPUT------------")
+      print(output)
+      print("END---------------")
+      err = criterion:forward(output, labels[i])
+      errAvg = errAvg + err
+   end
+   ----------------------------------------------------------------------------
+   -- Average error
+   ----------------------------------------------------------------------------
+   errAvg = errAvg / data:size(1)
 end

@@ -1,10 +1,7 @@
 --------------------------------------------------------------------------------
 -- File containing Training definitions, for example Criterions,
 -- Custom optimizing procedures
---------------------------------------------------------------------------------
-
-require 'gnuplot'
-require 'image'
+-------------------------------------------------------------------------------- require 'gnuplot' require 'image'
 locales = {'en_US.UTF-8'}
 os.setlocale(locales[1])
 
@@ -117,6 +114,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
    local memSize = tonumber(opt.memorySize)
    local batchSize = tonumber(opt.batchSize)
    local maxForwardSteps = tonumber(opt.maxForwardSteps)
+
    ----------------------------------------------------------------------------
    -- Work in batches
    ----------------------------------------------------------------------------
@@ -126,6 +124,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
    local batchNum = 1
    local errors = {}
    local learnIterations = 0
+
    ----------------------------------------------------------------------------
    -- Training loop
    ----------------------------------------------------------------------------
@@ -394,7 +393,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          -- normalize gradients and f(X)
          gradParameters:div(#inputs)
          f = f/#inputs
-         errors[#errors + 1] = f
+         errors[#errors + 1] = f -- corresponds to one batch
          -- return f and df/dX
          return f, gradParameters
       end
@@ -421,9 +420,21 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
       collectgarbage()
    end
    if opt.plot then
-      myfigure = gnuplot.figure(myfigure,
-                                {["raise"] = false, ["noraise"] = true})
+      --myfigure = gnuplot.figure(myfigure,
+                                --{["raise"] = false, ["noraise"] = true})
+      
+      -- dump data to file to use matplotlib + python                          
+      file = io.open("errors_training_" .. model.modelName .. tonumber(model.itNum), 'a') 
+      io.output(file)
+      for i=1,#errors do
+       io.write(tostring(errors[i]) .. "\n")
+      end
+      io.output(io.stdout)
+      file.close()
+
+      gnuplot.pngfigure("grafic.png")
       gnuplot.plot(torch.Tensor(errors))
+      gnuplot.plotflush()
    end
 end
 
