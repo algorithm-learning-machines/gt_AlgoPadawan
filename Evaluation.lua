@@ -85,7 +85,7 @@ function evalModelSupervised(model, dataset, criterion, opt)
     errAvg = errAvg / data:size(1)
     --print("Error in evaluation "..errAvg)
     -- add errors to file
-    local file = io.open("_eval_errors_" .. model.modelName, 'a')
+    local file = io.open("data_dumps/errors_evaluation_" .. model.modelName .. tonumber(model.itNum), 'a')
     io.output(file)
     io.write(tostring(errAvg) .. "\n")
     io.output(io.stdout)

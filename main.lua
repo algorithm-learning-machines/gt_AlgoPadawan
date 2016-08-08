@@ -6,6 +6,9 @@
 --------------------------------------------------------------------------------
 -- Dependencies
 --------------------------------------------------------------------------------
+print("gigi are mere")
+
+
 require 'torch'
 require 'nn'
 require 'nngraph'
@@ -13,6 +16,8 @@ require 'rnn'
 require 'optim'
 require 'cutorch'
 require 'image'
+
+
 
 
 --------------------------------------------------------------------------------
@@ -95,6 +100,7 @@ cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
 cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
+cmd:option('-modelName', 'CSS', 'name of model to be used for data dumps')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------
@@ -169,7 +175,7 @@ end
    --end
 --end
 
-model.modelName = "firstModel"
+model.modelName = opt.modelName 
 
 --------------------------------------------------------------------------------
 -- Train the model
@@ -185,8 +191,6 @@ end
 --------------------------------------------------------------------------------
 -- Evaluate model
 --------------------------------------------------------------------------------
---for i=1,opt.eval_episodes do
---end
 
 --------------------------------------------------------------------------------
 -- Display parameters after training

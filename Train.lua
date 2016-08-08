@@ -17,7 +17,6 @@ local winsParamsBias = {}
 local winsGradParamsBias = {}
 local winsAddress = {}
 
-
 --------------------------------------------------------------------------------
 -- Dummy Criterion for prototyping
 --------------------------------------------------------------------------------
@@ -289,49 +288,44 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                clones[j]:backward(cloneInputs[j], currentDf_do)
                
 
-               -- TODO make them local
 
-               if opt.plotMemory and false then
-                  winInput = image.display{
-                     image=toCriterion, win=winInput,
-                     zoom=100, legend='produced memory'
-                  }
-                  winTarget = image.display{
-                     image=t, win=winTarget,
-                     zoom=100, legend='target memory'
-                  }
-               end
-               --local a,_ = model:parameters()
-               --a[1]:add(torch.rand(a[1]:size()))
-               --a[2]:add(torch.rand(a[2]:size()))
-               --a[3]:add(torch.rand(a[3]:size()))
-               --a[4]:add(torch.rand(a[4]:size()))
-               --x = torch.linspace(-2 * math.pi, 2 * math.pi)
+               --if opt.plotMemory and false then
+                  --winInput = image.display{
+                     --image=toCriterion, win=winInput,
+                     --zoom=100, legend='produced memory'
+                  --}
+                  --winTarget = image.display{
+                     --image=t, win=winTarget,
+                     --zoom=100, legend='target memory'
+                  --}
+               --end
+               
+               ----x = torch.linspace(-2 * math.pi, 2 * math.pi)
                --gnuplot.plot(torch.sin(x))
 
-               if opt.plotParams and false then
-                  for r,v in pairs(model:findModules("nn.Linear")) do
-                     --v:updateParameters(0.4)
-                     winsParams[r] = image.display{
-                        image=v:parameters()[1],
-                        win=winsParams[r],
-                        zoom=35,
-                        legend = "params " .. r
-                     }
-                  end
-               end
+               --if opt.plotParams and false then
+                  --for r,v in pairs(model:findModules("nn.Linear")) do
+                     ----v:updateParameters(0.4)
+                     --winsParams[r] = image.display{
+                        --image=v:parameters()[1],
+                        --win=winsParams[r],
+                        --zoom=35,
+                        --legend = "params " .. r
+                     --}
+                  --end
+               --end
 
-               if opt.plotParams and false then
-                  for r,v in pairs(model:findModules("nn.Linear")) do
-                     local _, gP = v:parameters()
-                     winsGradParams[r] = image.display{
-                        image=gP[1],
-                        win=winsGradParams[r],
-                        zoom=35,
-                        legend = "grad_params " .. r
-                     }
-                  end
-               end
+               --if opt.plotParams and false then
+                  --for r,v in pairs(model:findModules("nn.Linear")) do
+                     --local _, gP = v:parameters()
+                     --winsGradParams[r] = image.display{
+                        --image=gP[1],
+                        --win=winsGradParams[r],
+                        --zoom=35,
+                        --legend = "grad_params " .. r
+                     --}
+                  --end
+               --end
 
                -- plot bias in linear
                --if opt.plotParams then
@@ -359,26 +353,23 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                --end
 
                -- plot output of softmax units
-               if opt.plotAddress and false then
-                  for r,v in pairs(model:findModules("nn.SoftMax")) do
-                     winsAddress[i] = image.display{
-                        image=v.output:view(1,-1),
-                        win=winsAddress[r],
-                        zoom=100,
-                        legend = "softmax " .. r
-                     }
-                  end
-               end
+               --if opt.plotAddress and false then
+                  --for r,v in pairs(model:findModules("nn.SoftMax")) do
+                     --winsAddress[i] = image.display{
+                        --image=v.output:view(1,-1),
+                        --win=winsAddress[r],
+                        --zoom=100,
+                        --legend = "softmax " .. r
+                     --}
+                  --end
+               --end
 
-               for r,v in pairs(model:findModules("nn.Linear")) do
-                  local p, gP = v:parameters()
-                  --print(p[1])
-                  --print(gP[1])
-                  --print(gradParameters)
-               end
-                
-
-               
+               --for r,v in pairs(model:findModules("nn.Linear")) do
+                  --local p, gP = v:parameters()
+                  ----print(p[1])
+                  ----print(gP[1])
+                  ----print(gradParameters)
+               --end
                
 
                err = err + currentErr
@@ -387,8 +378,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             collectgarbage()
             if opt.sleep then sys.sleep(tonumber(opt.sleep)) end
          end
-
-         --print("GRADIENTUL ADUNAT: " .. gradParameters:clone():abs():sum())
 
          -- normalize gradients and f(X)
          gradParameters:div(#inputs)
@@ -400,10 +389,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
       -- optimize on current mini-batch
       if optimMethod == optim.asgd then
-         --print('ce as vrea sa ma optimizez!')
          _, _, average = optimMethod(feval, parameters, optimState)
       else
-         --print('ma optimizez!')
          optimMethod(feval, parameters, optimState)
       end
       if opt.saveEvery ~= nil and learnIterations % opt.saveEvery == 0 then
@@ -417,22 +404,24 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          end
       end
       learnIterations = learnIterations + 1
+
       collectgarbage()
    end
    if opt.plot then
       --myfigure = gnuplot.figure(myfigure,
                                 --{["raise"] = false, ["noraise"] = true})
       
-      -- dump data to file to use matplotlib + python                          
-      file = io.open("errors_training_" .. model.modelName .. tonumber(model.itNum), 'a') 
+      -- dump data to file to use matplotlib + python --------------------------                          
+      file = io.open("data_dumps/errors_training_" .. model.modelName .. tonumber(model.itNum) .. ".txt", 'a') 
       io.output(file)
       for i=1,#errors do
        io.write(tostring(errors[i]) .. "\n")
       end
       io.output(io.stdout)
       file.close()
-
-      gnuplot.pngfigure("grafic.png")
+      --------------------------------------------------------------------------
+   
+      gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. model.itNum ..".png")
       gnuplot.plot(torch.Tensor(errors))
       gnuplot.plotflush()
    end
