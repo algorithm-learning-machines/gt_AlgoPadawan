@@ -3,3 +3,4 @@
 *.dot
 *.png
 *.txt
+data_dumps/*
