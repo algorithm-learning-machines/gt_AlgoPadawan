@@ -182,11 +182,47 @@ model.modelName = opt.modelName
 --------------------------------------------------------------------------------
 
 local mse = nn.MSECriterion()
+local epochs_all_errors = {}
+local epochs_all_accuracies = {}
+
+opt.epochs = 2 
+
 for i=1,opt.epochs do
    model.itNum = i
-   trainModel(model, mse, dataset, opt, optim.adam)
-   evalModelSupervised(model, dataset, mse, opt)
+
+   local epoch_errors = trainModel(model, mse, dataset, opt, optim.adam)
+   --print(epoch_errors)
+   --if ((i - 1) % 5 == 0) then
+      epochs_all_errors[#epochs_all_errors + 1] = unpack(epoch_errors)
+   --end
+
+   local accuracy = evalModelSupervised(model, dataset, mse, opt)
+   --if ((i - 1) % 5 == 0) then
+      epochs_all_accuracies[#epochs_all_accuracies + 1] = accuracy
+   --end
 end
+
+
+local plot_dict = {}
+for i=1,#epochs_all_errors do
+   plot_dict[i] = {"epoch num " .. tostring(i), torch.Tensor(epochs_all_errors[i])}
+end
+
+print(plot_dict)
+
+gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName ..".png")
+gnuplot.xlabel("Batch no.")
+gnuplot.ylabel("Train Error")
+gnuplot.plot(unpack(plot_dict)) -- this has to change
+gnuplot.plotflush()
+
+print(epochs_all_accuracies)
+
+gnuplot.pngfigure("data_dumps/errors_eval_" .. model.modelName ..".png")
+gnuplot.xlabel("Epoch no.")
+gnuplot.ylabel("Eval Error")
+gnuplot.plot(torch.Tensor(epochs_all_accuracies)) -- this has to change
+gnuplot.plotflush()
 
 --------------------------------------------------------------------------------
 -- Evaluate model

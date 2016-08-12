@@ -1,7 +1,10 @@
 --------------------------------------------------------------------------------
 -- File containing Training definitions, for example Criterions,
 -- Custom optimizing procedures
--------------------------------------------------------------------------------- require 'gnuplot' require 'image'
+--------------------------------------------------------------------------------
+require 'gnuplot'
+require 'image'
+
 locales = {'en_US.UTF-8'}
 os.setlocale(locales[1])
 
@@ -123,7 +126,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
    local batchNum = 1
    local errors = {}
    local learnIterations = 0
-
+   local epoch_errors = {}
    ----------------------------------------------------------------------------
    -- Training loop
    ----------------------------------------------------------------------------
@@ -421,10 +424,14 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
       file.close()
       --------------------------------------------------------------------------
    
-      gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. model.itNum ..".png")
-      gnuplot.plot(torch.Tensor(errors))
-      gnuplot.plotflush()
+      --gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. model.itNum ..".png")
+      --gnuplot.xlabel("Batch no.")
+      --gnuplot.ylabel("Error")
+      --gnuplot.plot(torch.Tensor(errors)) -- this has to change
+      --gnuplot.plotflush()
+      epoch_errors[#epoch_errors + 1] = errors
    end
+   return epoch_errors
 end
 
 --------------------------------------------------------------------------------

@@ -90,6 +90,7 @@ function evalModelSupervised(model, dataset, criterion, opt)
     io.write(tostring(errAvg) .. "\n")
     io.output(io.stdout)
     io.close(file)
+    return errAvg
 end
 
 
