@@ -100,7 +100,7 @@ cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
 cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
-cmd:option('-modelName', 'GRU', 'name of model to be used for data dumps')
+cmd:option('-modelName', 'LSTM', 'name of model to be used for data dumps')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------
