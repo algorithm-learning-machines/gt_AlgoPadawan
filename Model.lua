@@ -132,6 +132,9 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
    local value = nn.MM()({addressTransp, initialMem})     -- extract memory line
    -----------------------------------------------------------------------------
 
+ 
+ 
+
    -----------------------------------------------------------------------------
    -- Next address calculator
    -----------------------------------------------------------------------------
@@ -167,6 +170,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
 
    linkedNode = inputAddr
    if addressWriter then
+      print("patratel\n\n")
       AW = addressWriter
       params = {memSize}
    end
@@ -174,6 +178,10 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
    local addrCalc = AW(unpack(params))(linkedNode)
    ----------------------------------------------------------------------------
 
+   --fifi = nn.gModule({initialMem}, {addrCalc})
+   --print("gigi")
+   --print(fifi:forward(torch.Tensor(memSize, vectorSize)))
+  
 
    ----------------------------------------------------------------------------
    -- Next value calculator
@@ -220,9 +228,11 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
    out_dict = {}
    in_dict[#in_dict + 1] = initialMem
    out_dict[#out_dict + 1] = finMem
+
    if not opt.noInput then -- add input to initial dict
       in_dict[#in_dict + 1] = input
    end
+
    if addressReader then -- add back address to input
       in_dict[#in_dict + 1] = prevWriteAddress
       out_dict[#out_dict + 1] = addrCalc

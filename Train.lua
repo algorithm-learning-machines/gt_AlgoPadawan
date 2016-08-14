@@ -194,7 +194,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                end
 
                if opt.simplified then --propagating previous address
-                  cloneInputs[numIterations] = {memory, prevAddr}
+                  --cloneInputs[numIterations] = {memory, prevAddr}
                end
                local output = clones[numIterations]:forward(
                   cloneInputs[numIterations])

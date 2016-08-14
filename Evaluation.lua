@@ -64,16 +64,17 @@ function evalModelSupervised(model, dataset, criterion, opt)
         local grandErr = 0.0
         for j = 1,opt.maxForwardSteps do
             
-            output = model:forward({memory, prevAdr})
-            err = criterion:forward(output[1], labels[i][j])
+            --output = model:forward({memory, prevAdr})
+            output = model:forward(memory)
+            err = criterion:forward(output, labels[i][j])
             grandErr = grandErr + err
             --print("LABEL-------------")
             --print(labels[i][j])
             --print("OUTPUT------------")
             --print(output[1])
             --print("END---------------")
-            prevArr = output[2]
-            memory = output[1]
+            --prevArr = output[2]
+            memory = output
         end
         grandErr = grandErr / opt.maxForwardSteps 
         errAvg = errAvg + grandErr

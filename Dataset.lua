@@ -64,6 +64,7 @@ function Dataset.create(opt)
    self.maxVal = tonumber(opt.maxVal)
    self.memorySize = tonumber(opt.memorySize)
    self.batchIndex = 1 -- initial index
+   self.taskName = opt.datasetType
 
    local trainSet = {}
    local testSet = {}
@@ -160,7 +161,7 @@ function Dataset.__genRepeatOnce(
       local idx = torch.linspace(1,inputs[i]:size(1), inputs[i]:size(1)):long()
       idx[1], idx[2] = 2, 1
       inputs[i] = inputs[i]:index(1, idx)
-      --print(inputs[i])
+
       inputOriginal[tostring(template)] = template
       outputMemory = inputMemory:clone()
       outputMemory[2] = template:clone()

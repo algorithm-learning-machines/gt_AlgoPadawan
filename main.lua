@@ -100,7 +100,7 @@ cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
 cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
-cmd:option('-modelName', 'CSS', 'name of model to be used for data dumps')
+cmd:option('-modelName', 'GRU', 'name of model to be used for data dumps')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------
@@ -129,15 +129,15 @@ local ShiftLearn = require('ShiftLearn')
 opt.separateValAddr = true 
 opt.noInput = true
 opt.noProb = true
-opt.simplified = true 
-opt.supervised = true
+opt.simplified = false 
+opt.supervised = true 
 opt.maxForwardSteps = dataset.repetitions
 --------------------------------------------------------------------------------
 
-local model = Model.create(opt, ShiftLearn.createWrapper,
-   ShiftLearn.createWrapper, nn.Identity, "modelName")
+--local model = Model.create(opt, ShiftLearn.createWrapper,
+   --ShiftLearn.createWrapper, nn.Identity, "modelName")
 
---model = Model.create(opt)
+model = Model.create(opt)
 
 if opt.giveMeModel then
    return model
@@ -176,7 +176,7 @@ end
 --end
 
 model.modelName = opt.modelName 
-
+--print(dataset.repetitions)
 --------------------------------------------------------------------------------
 -- Train the model
 --------------------------------------------------------------------------------
@@ -184,33 +184,42 @@ model.modelName = opt.modelName
 local mse = nn.MSECriterion()
 local epochs_all_errors = {}
 local epochs_all_accuracies = {}
-
-opt.epochs = 2 
+opt.simplified = false
+opt.epochs = 11 
 
 for i=1,opt.epochs do
    model.itNum = i
 
    local epoch_errors = trainModel(model, mse, dataset, opt, optim.adam)
-   --print(epoch_errors)
-   --if ((i - 1) % 5 == 0) then
+
+   if ((i - 1) % 5 == 0) then
       epochs_all_errors[#epochs_all_errors + 1] = unpack(epoch_errors)
-   --end
+   end
 
    local accuracy = evalModelSupervised(model, dataset, mse, opt)
-   --if ((i - 1) % 5 == 0) then
+
+   if ((i - 1) % 5 == 0) then
       epochs_all_accuracies[#epochs_all_accuracies + 1] = accuracy
-   --end
+   end
+
 end
 
 
 local plot_dict = {}
+
 for i=1,#epochs_all_errors do
-   plot_dict[i] = {"epoch num " .. tostring(i), torch.Tensor(epochs_all_errors[i])}
+   ix = 0
+   if i == 1 then
+      ix = 1
+   else
+      ix = (i - 1) * 5
+   end
+   plot_dict[i] = {"epoch num " .. tostring(ix), torch.Tensor(epochs_all_errors[i])}
 end
 
 print(plot_dict)
 
-gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName ..".png")
+gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. "R" .. tostring(dataset.repetitions) .. ".png")
 gnuplot.xlabel("Batch no.")
 gnuplot.ylabel("Train Error")
 gnuplot.plot(unpack(plot_dict)) -- this has to change
@@ -218,7 +227,7 @@ gnuplot.plotflush()
 
 print(epochs_all_accuracies)
 
-gnuplot.pngfigure("data_dumps/errors_eval_" .. model.modelName ..".png")
+gnuplot.pngfigure("data_dumps/errors_eval_" .. model.modelName .. "R" .. tostring(dataset.repetitions) .. ".png")
 gnuplot.xlabel("Epoch no.")
 gnuplot.ylabel("Eval Error")
 gnuplot.plot(torch.Tensor(epochs_all_accuracies)) -- this has to change
