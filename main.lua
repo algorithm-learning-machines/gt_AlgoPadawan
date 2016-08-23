@@ -185,22 +185,32 @@ local mse = nn.MSECriterion()
 local epochs_all_errors = {}
 local epochs_all_accuracies = {}
 opt.simplified = false
-opt.epochs = 11 
+opt.epochs = 5 
+
+local avg_errs = {}
 
 for i=1,opt.epochs do
    model.itNum = i
 
    local epoch_errors = trainModel(model, mse, dataset, opt, optim.adam)
+    
+   --if ((i - 1) % 5 == 0) then
+   epochs_all_errors[#epochs_all_errors + 1] = unpack(epoch_errors)
+   --end
+   
+   print(epoch_errors) 
 
-   if ((i - 1) % 5 == 0) then
-      epochs_all_errors[#epochs_all_errors + 1] = unpack(epoch_errors)
+   avg = 0.0 
+   for k,v in pairs(epoch_errors[1]) do
+      avg = avg + v
    end
+
+   avg = avg / (#epoch_errors)
+   avg_errs[#avg_errs + 1] = avg
 
    local accuracy = evalModelSupervised(model, dataset, mse, opt)
 
-   if ((i - 1) % 5 == 0) then
-      epochs_all_accuracies[#epochs_all_accuracies + 1] = accuracy
-   end
+   epochs_all_accuracies[#epochs_all_accuracies + 1] = accuracy
 
 end
 
@@ -208,29 +218,41 @@ end
 local plot_dict = {}
 
 for i=1,#epochs_all_errors do
-   ix = 0
-   if i == 1 then
-      ix = 1
-   else
-      ix = (i - 1) * 5
-   end
-   plot_dict[i] = {"epoch num " .. tostring(ix), torch.Tensor(epochs_all_errors[i])}
+   --if i == 1 then
+      --ix = 1
+   --else
+      --ix = (i - 1) * 5
+   --end
+   plot_dict[i] = { "epoch num " .. tostring(i),
+      torch.Tensor(epochs_all_errors[i]) }
 end
 
-print(plot_dict)
+--print(plot_dict)
 
-gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. "R" .. tostring(dataset.repetitions) .. ".png")
+gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. 
+   "R" .. tostring(dataset.repetitions) .. ".png")
 gnuplot.xlabel("Batch no.")
 gnuplot.ylabel("Train Error")
 gnuplot.plot(unpack(plot_dict)) -- this has to change
 gnuplot.plotflush()
 
-print(epochs_all_accuracies)
+--print(epochs_all_accuracies)
 
-gnuplot.pngfigure("data_dumps/errors_eval_" .. model.modelName .. "R" .. tostring(dataset.repetitions) .. ".png")
+gnuplot.pngfigure("data_dumps/errors_eval_" .. model.modelName ..
+   "R" .. tostring(dataset.repetitions) .. ".png")
 gnuplot.xlabel("Epoch no.")
 gnuplot.ylabel("Eval Error")
 gnuplot.plot(torch.Tensor(epochs_all_accuracies)) -- this has to change
+gnuplot.plotflush()
+
+print(torch.Tensor(avg_errs))
+print(torch.Tensor(epochs_all_accuracies))
+
+gnuplot.pngfigure("data_dumps/errors_all_avg_" .. model.modelName .. 
+   "R" .. tostring(dataset.repetitions) .. ".png")
+gnuplot.xlabel("Epoch no.")
+gnuplot.ylabel("Error")
+gnuplot.plot({torch.Tensor(avg_errs)},{torch.Tensor(epochs_all_accuracies)}) -- this has to change
 gnuplot.plotflush()
 
 --------------------------------------------------------------------------------
