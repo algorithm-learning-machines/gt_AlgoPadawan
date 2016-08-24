@@ -6,8 +6,6 @@
 --------------------------------------------------------------------------------
 -- Dependencies
 --------------------------------------------------------------------------------
-print("gigi are mere")
-
 
 require 'torch'
 require 'nn'
@@ -16,9 +14,6 @@ require 'rnn'
 require 'optim'
 require 'cutorch'
 require 'image'
-
-
-
 
 --------------------------------------------------------------------------------
 -- Command line options
@@ -100,7 +95,7 @@ cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
 cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
-cmd:option('-modelName', 'LSTM', 'name of model to be used for data dumps')
+cmd:option('-modelName', 'customAddress', 'name of model to be used for data dumps')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------
@@ -129,15 +124,15 @@ local ShiftLearn = require('ShiftLearn')
 opt.separateValAddr = true 
 opt.noInput = true
 opt.noProb = true
-opt.simplified = false 
+opt.simplified = true--false 
 opt.supervised = true 
 opt.maxForwardSteps = dataset.repetitions
 --------------------------------------------------------------------------------
 
---local model = Model.create(opt, ShiftLearn.createWrapper,
-   --ShiftLearn.createWrapper, nn.Identity, "modelName")
+local model = Model.create(opt, ShiftLearn.createWrapper,
+   ShiftLearn.createWrapper, nn.Identity, "modelName")
 
-model = Model.create(opt)
+--model = Model.create(opt)
 
 if opt.giveMeModel then
    return model
@@ -176,6 +171,7 @@ end
 --end
 
 model.modelName = opt.modelName 
+
 --print(dataset.repetitions)
 --------------------------------------------------------------------------------
 -- Train the model
@@ -184,7 +180,7 @@ model.modelName = opt.modelName
 local mse = nn.MSECriterion()
 local epochs_all_errors = {}
 local epochs_all_accuracies = {}
-opt.simplified = false
+opt.simplified = true --false
 opt.epochs = 5 
 
 local avg_errs = {}
@@ -194,9 +190,7 @@ for i=1,opt.epochs do
 
    local epoch_errors = trainModel(model, mse, dataset, opt, optim.adam)
     
-   --if ((i - 1) % 5 == 0) then
    epochs_all_errors[#epochs_all_errors + 1] = unpack(epoch_errors)
-   --end
    
    print(epoch_errors) 
 

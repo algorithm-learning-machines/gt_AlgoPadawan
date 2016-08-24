@@ -46,6 +46,24 @@ function evalModelOnDataset(model, dataset, criterion)
 end
 
 
+function getDiffs(outputMem, targetMem, begin_ix, end_ix)
+   diff = 0
+   for i=begin_ix,end_ix do
+      for j=1, targetMem:size(2) do
+         local val = outputMem[i][j]
+         if val > 0.5 then
+            val = 1
+         else
+            val = 0
+         end
+         if targetMem[i][j] ~= val then
+            diff = diff + 1
+         end
+      end
+   end
+   return diff
+end
+
 --------------------------------------------------------------------------------
 -- Evaluate a model trained on a certain dataset
 --------------------------------------------------------------------------------
@@ -63,18 +81,21 @@ function evalModelSupervised(model, dataset, criterion, opt)
         local memory = currentInstance
         local grandErr = 0.0
         for j = 1,opt.maxForwardSteps do
+            --print(memory)
+            --print(prevAdr)
+            output = model:forward({memory, prevAdr})
+            --output = model:forward(memory)
+            err = criterion:forward(output[1], labels[i][j])
+             
+            if j == opt.maxForwardSteps then
+               err_discrete = getDiffs(output[1], labels[i][j], 1, dataset.repetitions)
+               print(labels[i][j])
+               print(err_discrete)
+            end
             
-            --output = model:forward({memory, prevAdr})
-            output = model:forward(memory)
-            err = criterion:forward(output, labels[i][j])
             grandErr = grandErr + err
-            --print("LABEL-------------")
-            --print(labels[i][j])
-            --print("OUTPUT------------")
-            --print(output[1])
-            --print("END---------------")
-            --prevArr = output[2]
-            memory = output
+            prevAdr = output[2]
+            memory = output[1]
         end
         grandErr = grandErr / opt.maxForwardSteps 
         errAvg = errAvg + grandErr

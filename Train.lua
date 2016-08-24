@@ -194,7 +194,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                end
 
                if opt.simplified then --propagating previous address
-                  --cloneInputs[numIterations] = {memory, prevAddr}
+                  cloneInputs[numIterations] = {memory, prevAddr}
                end
                local output = clones[numIterations]:forward(
                   cloneInputs[numIterations])
@@ -387,6 +387,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          f = f/#inputs
          errors[#errors + 1] = f -- corresponds to one batch
          -- return f and df/dX
+         gradParameters:add(0.0001)
          return f, gradParameters
       end
 
