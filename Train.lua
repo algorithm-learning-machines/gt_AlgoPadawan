@@ -97,7 +97,7 @@ function PNLLCriterion:updateGradInput(input, target)
 
 end
 
-function getDiffs(outputMem, targetMem, begin_ix, end_ix)
+function getDiffsTrain(outputMem, targetMem, begin_ix, end_ix)
    diff = 0
    for i=begin_ix,end_ix do
       for j=1, targetMem:size(2) do
@@ -112,7 +112,7 @@ function getDiffs(outputMem, targetMem, begin_ix, end_ix)
          end
       end
    end
-   return diff
+   return diff * 1.0 / ((end_ix - begin_ix + 1) * targetMem:size(2)) * 100.0
 end
 
 
@@ -174,9 +174,9 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          gradParameters:zero()                                -- reset gradients
 
          local f = 0                       -- f is the average of all criterions
+         local f_discrete = 0.0
 
          for i = 1,#inputs do                -- evaluate function for mini batch
-
             local memory
             if opt.noInput then
                memory = inputs[i]
@@ -266,7 +266,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             ----------------------------------------------------------------
 
             local err = 0
-
+            local err_discrete = 0.0
             for j=#clones-1,1,-1 do
                local currentOutput = cloneOutputs[j]
                if opt.targetIndex ~= nil then
@@ -291,8 +291,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                end
 
                if j == #clones - 1 then
-                  errors_discrete[#errors_discrete + 1] =
-                     getDiffs(currentOutput, t, 1, dataset.repetitions)
+                  err_discrete = getDiffsTrain(currentOutput[1], t, 1, dataset.repetitions)
                end
 
                local toCriterion = currentOutput
@@ -325,6 +324,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                err = err + currentErr
             end
             f = f + err
+            f_discrete = f_discrete + err_discrete
             collectgarbage()
             if opt.sleep then sys.sleep(tonumber(opt.sleep)) end
          end
@@ -332,7 +332,11 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          -- normalize gradients and f(X)
          gradParameters:div(#inputs)
          f = f/#inputs
+         f_discrete = f_discrete/#inputs
+         --print(f_discrete)
          errors[#errors + 1] = f -- corresponds to one batch
+         errors_discrete[#errors_discrete + 1] = f_discrete
+         --print(errors_discrete)
          --errors_discrete[#errors_discrete + 1] = getDiffs()
          
          -- return f and df/dX
@@ -380,6 +384,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
       --gnuplot.ylabel("Error")
       --gnuplot.plot(torch.Tensor(errors)) -- this has to change
       --gnuplot.plotflush()
+      print(errors_discrete)
       epoch_errors[#epoch_errors + 1] = {errors, errors_discrete}
    end
    return epoch_errors

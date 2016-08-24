@@ -61,7 +61,7 @@ function getDiffs(outputMem, targetMem, begin_ix, end_ix)
          end
       end
    end
-   return diff
+   return diff * 1.0 / ((end_ix - begin_ix + 1) * targetMem:size(2)) * 100.0
 end
 
 --------------------------------------------------------------------------------
@@ -73,49 +73,56 @@ function evalModelSupervised(model, dataset, criterion, opt)
     local data = testSet[1]
     local labels = testSet[2]
     local errAvg = 0.0
+    local errAvg_discrete = 0.0
     local prevAdr = torch.zeros(opt.memorySize)
+    local err_discrete = 0.0
     prevAdr[1] = 1
+    local grandErr = 0.0
+    local grandErr_discrete = 0.0
     for i=1,data:size(1) do
         local currentInstance = data[i]
         local numIterations = 1
         local memory = currentInstance
-        local grandErr = 0.0
+
         for j = 1,opt.maxForwardSteps do
-            --print(memory)
-            --print(prevAdr)
             output = model:forward({memory, prevAdr})
             --output = model:forward(memory)
             err = criterion:forward(output[1], labels[i][j])
              
             if j == opt.maxForwardSteps then
                err_discrete = getDiffs(output[1], labels[i][j], 1, dataset.repetitions)
-               print(labels[i][j])
-               print(err_discrete)
             end
             
             grandErr = grandErr + err
+            
             prevAdr = output[2]
             memory = output[1]
         end
         grandErr = grandErr / opt.maxForwardSteps 
+         
         errAvg = errAvg + grandErr
+        errAvg_discrete = errAvg_discrete + err_discrete 
     end
 
     ----------------------------------------------------------------------------
     -- Average error
     ----------------------------------------------------------------------------
     errAvg = errAvg / data:size(1)
+    errAvg_discrete = errAvg_discrete / data:size(1)
+    --print(data:size(1))
+
     --print("Error in evaluation "..errAvg)
     -- add errors to file
-    local file = io.open("data_dumps/errors_evaluation_" .. model.modelName .. tonumber(model.itNum), 'a')
+    
+    local file = io.open("data_dumps/errors_evaluation_" ..
+      model.modelName .. tonumber(model.itNum), 'a')
+
     io.output(file)
     io.write(tostring(errAvg) .. "\n")
     io.output(io.stdout)
     io.close(file)
-    return errAvg
+    return {errAvg, errAvg_discrete}
 end
-
-
 
 --------------------------------------------------------------------------------
 -- Evaluate a model trained on a certain dataset, supervised, single step

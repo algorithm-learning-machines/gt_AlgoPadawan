@@ -179,93 +179,120 @@ model.modelName = opt.modelName
 
 local mse = nn.MSECriterion()
 local epochs_all_errors = {}
+
+local epochs_all_errors_mse = {}
 local epochs_all_accuracies = {}
+local epochs_all_accuracies_mse = {}
+local epochs_all_accuracies_discrete = {}
+local epochs_all_errors_discrete = {}
+
 opt.simplified = true --false
 opt.epochs = 5 
 
 local avg_errs = {}
+local avg_errs_mse = {}
+local avg_errs_discrete = {}
 
 for i=1,opt.epochs do
    model.itNum = i
 
    local epoch_errors = trainModel(model, mse, dataset, opt, optim.adam)
-    
-   epochs_all_errors[#epochs_all_errors + 1] = unpack(epoch_errors)
-   
-   print(epoch_errors) 
 
-   avg = 0.0 
-   for k,v in pairs(epoch_errors[1]) do
-      avg = avg + v
+   local epoch_errors_mse = epoch_errors[1][1]
+   local epoch_errors_discrete = epoch_errors[1][2]
+   --print("epoch err")
+   --print(epoch_errors_mse)
+   --print("end epoch err")
+   --print("epoch ---------------")
+   --print(epoch_errors_mse)
+   --print(epoch_errors_discrete)
+   --print("end epoch----------------")
+
+   epochs_all_errors_mse[#epochs_all_errors_mse + 1] = unpack(epoch_errors_mse)
+   epochs_all_errors_discrete[#epochs_all_errors_discrete + 1] =
+      unpack(epoch_errors_discrete) 
+
+   avg_mse = 0.0 
+   avg_discrete = 0.0
+
+   for k,v in pairs(epoch_errors_mse) do
+      avg_mse = avg_mse + v
    end
 
-   avg = avg / (#epoch_errors)
-   avg_errs[#avg_errs + 1] = avg
+   for k,v in pairs(epoch_errors_discrete) do
+      avg_discrete = avg_discrete + v
+   end
+
+   avg_mse = avg_mse / (#epoch_errors_mse)
+   avg_errs_mse[#avg_errs_mse + 1] = avg_mse
+   print("num")
+   --print(#epochs_all_errors_discrete)
+   --print(epochs_all_errors_discrete)
+   print("end num")
+   avg_discrete = avg_discrete / (#epoch_errors_discrete)
+   avg_errs_discrete[#avg_errs_discrete + 1] = avg_discrete
 
    local accuracy = evalModelSupervised(model, dataset, mse, opt)
-
+   --print(accuracy)
    epochs_all_accuracies[#epochs_all_accuracies + 1] = accuracy
 
+   epochs_all_accuracies_mse[#epochs_all_accuracies_mse + 1] = accuracy[1]
+   epochs_all_accuracies_discrete[#epochs_all_accuracies_discrete + 1] =
+      accuracy[2]
+  print("end epoch")
 end
 
 
-local plot_dict = {}
+--local plot_dict = {}
 
-for i=1,#epochs_all_errors do
-   plot_dict[i] = { "epoch num " .. tostring(i),
-      torch.Tensor(epochs_all_errors[i]) }
-end
-
-
-gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. 
-   "R" .. tostring(dataset.repetitions) .. ".png")
-gnuplot.xlabel("Batch no.")
-gnuplot.ylabel("Train Error")
-gnuplot.plot(unpack(plot_dict)) -- this has to change
-gnuplot.plotflush()
+--for i=1,#epochs_all_errors do
+   --plot_dict[i] = { "epoch num " .. tostring(i),
+      --torch.Tensor(epochs_all_errors[i]) }
+--end
 
 
-gnuplot.pngfigure("data_dumps/errors_eval_" .. model.modelName ..
-   "R" .. tostring(dataset.repetitions) .. ".png")
-gnuplot.xlabel("Epoch no.")
-gnuplot.ylabel("Eval Error")
-gnuplot.plot(torch.Tensor(epochs_all_accuracies)) -- this has to change
-gnuplot.plotflush()
+--gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. 
+   --"R" .. tostring(dataset.repetitions) .. ".png")
+--gnuplot.xlabel("Batch no.")
+--gnuplot.ylabel("Train Error")
+--gnuplot.plot(unpack(plot_dict)) -- this has to change
+--gnuplot.plotflush()
 
-print(torch.Tensor(avg_errs))
-print(torch.Tensor(epochs_all_accuracies))
 
-gnuplot.pngfigure("data_dumps/errors_all_avg_" .. model.modelName .. 
+--gnuplot.pngfigure("data_dumps/errors_eval_" .. model.modelName ..
+   --"R" .. tostring(dataset.repetitions) .. ".png")
+--gnuplot.xlabel("Epoch no.")
+--gnuplot.ylabel("Eval Error")
+--gnuplot.plot(torch.Tensor(epochs_all_accuracies)) -- this has to change
+--gnuplot.plotflush()
+
+--print(torch.Tensor(avg_errs))
+--print(torch.Tensor(epochs_all_accuracies))
+
+print(avg_errs_discrete)
+print(avg_errs_mse)
+print("--------------------")
+print(epochs_all_accuracies_discrete)
+print(epochs_all_accuracies_mse)
+print("--------------------")
+
+gnuplot.pngfigure("data_dumps/errors_all_avg_discrete_" .. model.modelName .. 
    "R" .. tostring(dataset.repetitions) .. ".png")
 gnuplot.xlabel("Epoch no.")
 gnuplot.ylabel("Error")
-gnuplot.plot({torch.Tensor(avg_errs)},{torch.Tensor(epochs_all_accuracies)}) -- this has to change
+gnuplot.plot({'Train error',torch.Tensor(avg_errs_discrete)},
+   {'Eval error', torch.Tensor(epochs_all_accuracies_discrete)}) -- this has to change
+gnuplot.plotflush()
+
+
+gnuplot.pngfigure("data_dumps/errors_all_avg_mse_" .. model.modelName .. 
+   "R" .. tostring(dataset.repetitions) .. ".png")
+gnuplot.xlabel("Epoch no.")
+gnuplot.ylabel("Error")
+gnuplot.plot({'Train error', torch.Tensor(avg_errs_mse)},
+   {'Eval error', torch.Tensor(epochs_all_accuracies_mse)}) -- this has to change
 gnuplot.plotflush()
 
 --------------------------------------------------------------------------------
 -- Evaluate model
 --------------------------------------------------------------------------------
-
---------------------------------------------------------------------------------
--- Display parameters after training
---------------------------------------------------------------------------------
-
---local winsAfter = {}
---local params, _ = model:parameters()
---for k,v in pairs(params) do
-   --if v:nDimension() == 1 then
-      --winsAfter[k] = image.display{
-         --image=v:view(1,-1),
-         --win=winsAfter[k],
-         --zoom=35,
-         --legend = "after bias " .. k
-      --}
-   --else
-      --winsAfter[k] = image.display{
-         --image=v,
-         --win=winsAfter[k],
-         --zoom=35,
-         --legend = "after params " .. k
-      --}
-   --end
---end
