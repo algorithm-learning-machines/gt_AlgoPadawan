@@ -97,6 +97,24 @@ function PNLLCriterion:updateGradInput(input, target)
 
 end
 
+function getDiffs(outputMem, targetMem, begin_ix, end_ix)
+   diff = 0
+   for i=begin_ix,end_ix do
+      for j=1, targetMem:size(2) do
+         local val = outputMem[i][j]
+         if val > 0.5 then
+            val = 1
+         else
+            val = 0
+         end
+         if targetMem[i][j] ~= val then
+            diff = diff + 1
+         end
+      end
+   end
+   return diff
+end
+
 
 --------------------------------------------------------------------------------
 -- function that trains a model on a dataset using a certain criterion and
@@ -125,6 +143,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
    batch = dataset:getNextBatch(batchSize)
    local batchNum = 1
    local errors = {}
+   local errors_discrete = {}
    local learnIterations = 0
    local epoch_errors = {}
    ----------------------------------------------------------------------------
@@ -208,6 +227,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                if opt.simplified then
                   prevAddr = output[2]
                end
+
+
                ------------------------------------------------------------
                -- Should end
                ------------------------------------------------------------
@@ -226,6 +247,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
                -- needed for backprop
                --TODO here used to be output[1]
+              
+               local old_memory = memory
                if not opt.simplified and opt.noInput and opt.noProb then
                   memory = output
                else
@@ -233,6 +256,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                end
 
                inputsIndex = inputsIndex + 1
+
+               
 
             end -- for forwardIteration (clones)
 
@@ -259,10 +284,17 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                -- TODO for parallel criterion here
                --local currentErr = criterion:forward({currentOutput,
                --currentOutput[2]},
+               
                local t = targets[i]
                if opt.supervised then
                   t = targets[i][j] -- sequence of targets in supervised
                end
+
+               if j == #clones - 1 then
+                  errors_discrete[#errors_discrete + 1] =
+                     getDiffs(currentOutput, t, 1, dataset.repetitions)
+               end
+
                local toCriterion = currentOutput
                if opt.simplified then
                   toCriterion = currentOutput[1]
@@ -270,6 +302,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
                local currentErr = criterion:forward(toCriterion,t)
                local currentDf_do = criterion:backward(toCriterion,t)
+
                if opt.simplified then
                   local dfPrevAddr = torch.zeros(prevAddr:size())
                   currentDf_do = {currentDf_do:clone(), dfPrevAddr}
@@ -287,93 +320,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                ------------------------------------------------------------
                -- Output derivatives
                ------------------------------------------------------------
-               --
                clones[j]:backward(cloneInputs[j], currentDf_do)
-               
-
-
-               --if opt.plotMemory and false then
-                  --winInput = image.display{
-                     --image=toCriterion, win=winInput,
-                     --zoom=100, legend='produced memory'
-                  --}
-                  --winTarget = image.display{
-                     --image=t, win=winTarget,
-                     --zoom=100, legend='target memory'
-                  --}
-               --end
-               
-               ----x = torch.linspace(-2 * math.pi, 2 * math.pi)
-               --gnuplot.plot(torch.sin(x))
-
-               --if opt.plotParams and false then
-                  --for r,v in pairs(model:findModules("nn.Linear")) do
-                     ----v:updateParameters(0.4)
-                     --winsParams[r] = image.display{
-                        --image=v:parameters()[1],
-                        --win=winsParams[r],
-                        --zoom=35,
-                        --legend = "params " .. r
-                     --}
-                  --end
-               --end
-
-               --if opt.plotParams and false then
-                  --for r,v in pairs(model:findModules("nn.Linear")) do
-                     --local _, gP = v:parameters()
-                     --winsGradParams[r] = image.display{
-                        --image=gP[1],
-                        --win=winsGradParams[r],
-                        --zoom=35,
-                        --legend = "grad_params " .. r
-                     --}
-                  --end
-               --end
-
-               -- plot bias in linear
-               --if opt.plotParams then
-                  --for i,v in pairs(model:findModules("nn.Linear")) do
-                     --winsParamsBias[i] = image.display{
-                        --image=v:parameters()[2]:view(1,-1),
-                        --win=winsParamsBias[i],
-                        --zoom=35,
-                        --legend = "params bias" .. i
-                     --}
-                  --end
-               --end
-
-               -- plot gradients for bias in linear
-               --if opt.plotParams then
-                  --for i,v in pairs(model:findModules("nn.Linear")) do
-                     --local _, gP = v:parameters()
-                     --winsGradParamsBias[i] = image.display{
-                        --image=gP[2]:view(1,-1),
-                        --win=winsGradParamsBias[i],
-                        --zoom=35,
-                        --legend = "grad_params bias" .. i
-                     --}
-                  --end
-               --end
-
-               -- plot output of softmax units
-               --if opt.plotAddress and false then
-                  --for r,v in pairs(model:findModules("nn.SoftMax")) do
-                     --winsAddress[i] = image.display{
-                        --image=v.output:view(1,-1),
-                        --win=winsAddress[r],
-                        --zoom=100,
-                        --legend = "softmax " .. r
-                     --}
-                  --end
-               --end
-
-               --for r,v in pairs(model:findModules("nn.Linear")) do
-                  --local p, gP = v:parameters()
-                  ----print(p[1])
-                  ----print(gP[1])
-                  ----print(gradParameters)
-               --end
-               
 
                err = err + currentErr
             end
@@ -386,8 +333,10 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          gradParameters:div(#inputs)
          f = f/#inputs
          errors[#errors + 1] = f -- corresponds to one batch
+         --errors_discrete[#errors_discrete + 1] = getDiffs()
+         
          -- return f and df/dX
-         gradParameters:add(0.0001)
+         --gradParameters:add(0.0001)
          return f, gradParameters
       end
 
@@ -407,13 +356,14 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             print("Model has been saved to "..opt.saveFile)
          end
       end
+
       learnIterations = learnIterations + 1
 
       collectgarbage()
    end
    if opt.plot then
       --myfigure = gnuplot.figure(myfigure,
-                                --{["raise"] = false, ["noraise"] = true})
+         --{["raise"] = false, ["noraise"] = true})
       
       -- dump data to file to use matplotlib + python --------------------------                          
       file = io.open("data_dumps/errors_training_" .. model.modelName .. tonumber(model.itNum) .. ".txt", 'a') 
@@ -430,7 +380,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
       --gnuplot.ylabel("Error")
       --gnuplot.plot(torch.Tensor(errors)) -- this has to change
       --gnuplot.plotflush()
-      epoch_errors[#epoch_errors + 1] = errors
+      epoch_errors[#epoch_errors + 1] = {errors, errors_discrete}
    end
    return epoch_errors
 end

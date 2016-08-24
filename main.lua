@@ -212,16 +212,10 @@ end
 local plot_dict = {}
 
 for i=1,#epochs_all_errors do
-   --if i == 1 then
-      --ix = 1
-   --else
-      --ix = (i - 1) * 5
-   --end
    plot_dict[i] = { "epoch num " .. tostring(i),
       torch.Tensor(epochs_all_errors[i]) }
 end
 
---print(plot_dict)
 
 gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. 
    "R" .. tostring(dataset.repetitions) .. ".png")
@@ -230,7 +224,6 @@ gnuplot.ylabel("Train Error")
 gnuplot.plot(unpack(plot_dict)) -- this has to change
 gnuplot.plotflush()
 
---print(epochs_all_accuracies)
 
 gnuplot.pngfigure("data_dumps/errors_eval_" .. model.modelName ..
    "R" .. tostring(dataset.repetitions) .. ".png")
