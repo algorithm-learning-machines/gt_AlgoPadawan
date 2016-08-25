@@ -4,3 +4,4 @@
 *.png
 *.txt
 data_dumps/*
+data_dumps_copy/*

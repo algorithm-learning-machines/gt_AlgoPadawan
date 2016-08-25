@@ -68,6 +68,9 @@ function PNLLCriterion:sumDifference(input, target)
    -- Vectorize loss calculus
    ----------------------------------------------------------------------------
    local f1 = memory:clone():log():cmul(target)  -- tk * log(mk)
+   --print(memory)
+   --print(f1)
+   --sys.sleep(2)
    local f2a = torch.ones(memSize) - target
    local f2b = torch.log(torch.ones(memSize) - memory) --(1-tk) * log(1-mk)
    local f2 = f2a:cmul(f2b) -- tk * log(mk) + (1 - tk) * log(1 - mk)
@@ -96,6 +99,9 @@ function PNLLCriterion:updateGradInput(input, target)
    dMemory:cdiv(denom)
    dMemory = dMemory * (-1)
    self.gradInput = {dMemory, torch.Tensor{dProb}}
+
+   --print(self.gradInput[2])
+
    return self.gradInput
 
 end
@@ -197,9 +203,11 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             local cloneInputs = {}
             local cloneOutputs = {}
             local probabilities = {}
+
             local prevAddr = torch.zeros(memSize)
             prevAddr[1] = 1
             clones[1] = model -- 1
+
             local inputsIndex = 1 -- current input index;
 
             while (not terminated) and numIterations <= maxForwardSteps do
@@ -397,7 +405,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
       --gnuplot.ylabel("Error")
       --gnuplot.plot(torch.Tensor(errors)) -- this has to change
       --gnuplot.plotflush()
-      print(errors_discrete)
+      --print(errors_discrete)
       epoch_errors[#epoch_errors + 1] = {errors, errors_discrete}
    end
    return epoch_errors

@@ -308,7 +308,8 @@ function Dataset.__genRepeatK(setSize, vectorSize,
       --local randomPart = torch.repeatTensor(torch.rand(1, vectorSize),
          --memorySize - 1, 1)
 
-      local randomPart = torch.rand(memorySize - 1, vectorSize)
+      local randomPart = torch.zeros(memorySize - 1, vectorSize)
+      --torch.rand(memorySize - 1, vectorSize)
 
       inputMemory = torch.cat(template:t(), randomPart, 1)
       inputs[i] = inputMemory

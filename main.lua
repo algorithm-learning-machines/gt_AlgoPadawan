@@ -64,7 +64,7 @@ datasetOpt.datasetType = 'repeat_k'
 datasetOpt.minVal = 1
 datasetOpt.maxVal = 31
 datasetOpt.memorySize = 5
-datasetOpt.repetitions = 3
+datasetOpt.repetitions = 2
 
 assert(datasetOpt.maxVal < 2 ^ datasetOpt.vectorSize, "Vector size too small")
 
@@ -164,7 +164,7 @@ local epochs_all_accuracies_discrete = {}
 local epochs_all_errors_discrete = {}
 
 opt.simplified = false 
-opt.epochs = 5 
+opt.epochs = 2 
 
 local avg_errs = {}
 local avg_errs_mse = {}

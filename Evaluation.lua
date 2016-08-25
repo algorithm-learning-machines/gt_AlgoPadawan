@@ -14,34 +14,54 @@ function evalModelOnDataset(model, dataset, criterion, opt)
     local data = testSet[1]
     local labels = testSet[2]
     local errAvg = 0.0
+    local errAvg_discrete = 0.0
+
     for i=1,data:size(1) do
 
         local currentInstance = data[i]
         local terminated = false
         local numIterations = 0
         local finalOutput = {}
-        print(model.maxForwardSteps)
+
         while not terminated and numIterations < opt.maxForwardSteps do
+
             local memory = currentInstance
             local output = model:forward(currentInstance)
 
             local prob = output[2][1]
+
             if prob > 0.9 then
                 terminated = true
             end
-
+            print(prob)
             memory = output[1]
             numIterations = numIterations + 1
             finalOutput = output
+
         end
+
         err = criterion:forward(finalOutput, labels[i][dataset.repetitions])
         errAvg = errAvg + err
-    end
+        
+        if opt.simplified or not opt.noProb then
+           err_discrete = getDiffs(finalOutput[1], labels[i][dataset.repetitions], 1,
+           dataset.repetitions)
+        else
+           err_discrete = getDiffs(finalOutput, labels[i][dataset.repetitions], 1,
+            dataset.repetitions)
+        end
+
+        errAvg_discrete = errAvg_discrete + err_discrete 
+
+
+     end
     ----------------------------------------------------------------------------
     -- Average error
     ----------------------------------------------------------------------------
     errAvg = errAvg / data:size(1)
+    errAvg_discrete = errAvg_discrete / data:size(1)
     print("Error in evaluation "..errAvg)
+    return {errAvg, errAvg_discrete}
 end
 
 
@@ -92,7 +112,6 @@ function evalModelSupervised(model, dataset, criterion, opt)
               output = model:forward(memory)
               err = criterion:forward(output, labels[i][j])
            end
-
             
             --output = model:forward(memory)
                          
@@ -102,7 +121,7 @@ function evalModelSupervised(model, dataset, criterion, opt)
                      dataset.repetitions)
                else
                   err_discrete = getDiffs(output, labels[i][j], 1,
-                  dataset.repetitions)
+                     dataset.repetitions)
                end
             end
             
@@ -125,18 +144,7 @@ function evalModelSupervised(model, dataset, criterion, opt)
     ----------------------------------------------------------------------------
     errAvg = errAvg / data:size(1)
     errAvg_discrete = errAvg_discrete / data:size(1)
-    --print(data:size(1))
-
-    --print("Error in evaluation "..errAvg)
-    -- add errors to file
     
-    --local file = io.open("data_dumps/errors_evaluation_" ..
-      --model.modelName .. tonumber(model.itNum), 'a')
-
-    --io.output(file)
-    --io.write(tostring(errAvg) .. "\n")
-    --io.output(io.stdout)
-    --io.close(file)
     return {errAvg, errAvg_discrete}
 end
 

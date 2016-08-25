@@ -108,7 +108,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
       reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
    end
 
-   local AR = nn.LSTM -- LSTM 
+   local AR = nn.GRU -- LSTM 
    params = {memSize * vectorSize, memSize, RNN_steps}
    linkedNode = reshapedMem
 
@@ -188,7 +188,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
    ----------------------------------------------------------------------------
 
    -- TODO add custom value writer
-   local VW = nn.GRU
+   local VW = nn.LSTM
    params = {inputSize + vectorSize, vectorSize, RNN_steps}
 
    if not opt.separateValAddr then
@@ -221,7 +221,9 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
 
    -- memory update
    local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
-   local finMem = nn.CAddTable()({memEraser, adder})
+   local intMem = nn.CAddTable()({memEraser, adder})
+   local finMem = nn.Sigmoid()(intMem)--nn.CAddTable()({memEraser, adder})
+   
    ----------------------------------------------------------------------------
 
    in_dict = {}
