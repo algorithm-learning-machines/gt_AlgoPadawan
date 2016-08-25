@@ -64,7 +64,7 @@ datasetOpt.datasetType = 'repeat_k'
 datasetOpt.minVal = 1
 datasetOpt.maxVal = 31
 datasetOpt.memorySize = 5
-datasetOpt.repetitions = 2
+datasetOpt.repetitions = 3
 
 assert(datasetOpt.maxVal < 2 ^ datasetOpt.vectorSize, "Vector size too small")
 
@@ -95,7 +95,7 @@ cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
 cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
-cmd:option('-modelName', 'customAddress', 'name of model to be used for data dumps')
+cmd:option('-modelName', 'LSTM', 'name of model to be used for data dumps')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------
@@ -124,15 +124,15 @@ local ShiftLearn = require('ShiftLearn')
 opt.separateValAddr = true 
 opt.noInput = true
 opt.noProb = true
-opt.simplified = true--false 
+opt.simplified = false 
 opt.supervised = true 
 opt.maxForwardSteps = dataset.repetitions
 --------------------------------------------------------------------------------
 
-local model = Model.create(opt, ShiftLearn.createWrapper,
-   ShiftLearn.createWrapper, nn.Identity, "modelName")
+--local model = Model.create(opt, ShiftLearn.createWrapper,
+   --ShiftLearn.createWrapper, nn.Identity, "modelName")
 
---model = Model.create(opt)
+local model = Model.create(opt)
 
 if opt.giveMeModel then
    return model
@@ -186,7 +186,7 @@ local epochs_all_accuracies_mse = {}
 local epochs_all_accuracies_discrete = {}
 local epochs_all_errors_discrete = {}
 
-opt.simplified = true --false
+opt.simplified = false 
 opt.epochs = 5 
 
 local avg_errs = {}
@@ -279,7 +279,7 @@ print("--------------------")
 gnuplot.pngfigure("data_dumps/errors_all_avg_discrete_" .. model.modelName .. 
    "R" .. tostring(dataset.repetitions) .. ".png")
 gnuplot.xlabel("Epoch no.")
-gnuplot.ylabel("Error")
+gnuplot.ylabel("Error(%)")
 gnuplot.plot({'Train error',torch.Tensor(avg_errs_discrete)},
    {'Eval error', torch.Tensor(epochs_all_accuracies_discrete)}) -- this has to change
 gnuplot.plotflush()

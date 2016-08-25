@@ -85,19 +85,36 @@ function evalModelSupervised(model, dataset, criterion, opt)
         local memory = currentInstance
 
         for j = 1,opt.maxForwardSteps do
-            output = model:forward({memory, prevAdr})
+           if opt.simplified then
+              output = model:forward({memory, prevAdr})
+              err = criterion:forward(output[1], labels[i][j])
+
+           else
+              output = model:forward(memory)
+              err = criterion:forward(output, labels[i][j])
+           end
+
+            
             --output = model:forward(memory)
-            err = criterion:forward(output[1], labels[i][j])
-             
+                         
             if j == opt.maxForwardSteps then
-               err_discrete = getDiffs(output[1], labels[i][j], 1, dataset.repetitions)
+               if opt.simplified then
+                  err_discrete = getDiffs(output[1], labels[i][j], 1,
+                     dataset.repetitions)
+               else
+                  err_discrete = getDiffs(output, labels[i][j], 1,
+                  dataset.repetitions)
+               end
             end
             
             grandErr = grandErr + err
-            
-            prevAdr = output[2]
-            memory = output[1]
-        end
+            if opt.simplified then
+               prevAdr = output[2]
+               memory = output[1]
+            else 
+               memory = output
+            end
+         end
         grandErr = grandErr / opt.maxForwardSteps 
          
         errAvg = errAvg + grandErr
@@ -114,13 +131,13 @@ function evalModelSupervised(model, dataset, criterion, opt)
     --print("Error in evaluation "..errAvg)
     -- add errors to file
     
-    local file = io.open("data_dumps/errors_evaluation_" ..
-      model.modelName .. tonumber(model.itNum), 'a')
+    --local file = io.open("data_dumps/errors_evaluation_" ..
+      --model.modelName .. tonumber(model.itNum), 'a')
 
-    io.output(file)
-    io.write(tostring(errAvg) .. "\n")
-    io.output(io.stdout)
-    io.close(file)
+    --io.output(file)
+    --io.write(tostring(errAvg) .. "\n")
+    --io.output(io.stdout)
+    --io.close(file)
     return {errAvg, errAvg_discrete}
 end
 

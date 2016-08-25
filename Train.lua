@@ -291,7 +291,11 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                end
 
                if j == #clones - 1 then
-                  err_discrete = getDiffsTrain(currentOutput[1], t, 1, dataset.repetitions)
+                  if opt.simplified then
+                     err_discrete = getDiffsTrain(currentOutput[1], t, 1, dataset.repetitions)
+                  else
+                     err_discrete = getDiffsTrain(currentOutput, t, 1, dataset.repetitions)
+                  end
                end
 
                local toCriterion = currentOutput
@@ -370,13 +374,13 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          --{["raise"] = false, ["noraise"] = true})
       
       -- dump data to file to use matplotlib + python --------------------------                          
-      file = io.open("data_dumps/errors_training_" .. model.modelName .. tonumber(model.itNum) .. ".txt", 'a') 
-      io.output(file)
+      --file = io.open("data_dumps/errors_training_" .. model.modelName .. tonumber(model.itNum) .. ".txt", 'a') 
+      --io.output(file)
       for i=1,#errors do
-       io.write(tostring(errors[i]) .. "\n")
+       --io.write(tostring(errors[i]) .. "\n")
       end
-      io.output(io.stdout)
-      file.close()
+      --io.output(io.stdout)
+      --file.close()
       --------------------------------------------------------------------------
    
       --gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. model.itNum ..".png")
