@@ -39,15 +39,18 @@ end
 -- Probability negative log likelihood
 -- Custom defined criterion
 --------------------------------------------------------------------------------
+
 local PNLLCriterion, _ = torch.class('nn.PNLLCriterion',  'nn.Criterion')
 
 
 function PNLLCriterion:updateOutput(input, target)
+
    ----------------------------------------------------------------------------
    -- Extract info from parameters
    ----------------------------------------------------------------------------
    local prob = input[2][1]
    self.output = (-1) * prob * self:sumDifference(input, target)
+
    return self.output
 end
 
@@ -189,7 +192,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
             -- number of forwards steps has been reached
             ----------------------------------------------------------------
             local terminated = false
-            local numIterations = 1 -- 0
+            local numIterations = 1
             local clones = {}
             local cloneInputs = {}
             local cloneOutputs = {}
@@ -215,6 +218,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                if opt.simplified then --propagating previous address
                   cloneInputs[numIterations] = {memory, prevAddr}
                end
+
                local output = clones[numIterations]:forward(
                   cloneInputs[numIterations])
 
@@ -227,7 +231,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                if opt.simplified then
                   prevAddr = output[2]
                end
-
 
                ------------------------------------------------------------
                -- Should end
@@ -249,6 +252,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                --TODO here used to be output[1]
               
                local old_memory = memory
+
                if not opt.simplified and opt.noInput and opt.noProb then
                   memory = output
                else
@@ -256,8 +260,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                end
 
                inputsIndex = inputsIndex + 1
-
-               
 
             end -- for forwardIteration (clones)
 
@@ -267,6 +269,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
             local err = 0
             local err_discrete = 0.0
+
             for j=#clones-1,1,-1 do
                local currentOutput = cloneOutputs[j]
                if opt.targetIndex ~= nil then
@@ -274,6 +277,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                   currentOutput[1] =
                      currentOutput[1][{{1, ix}, {}}]:t():squeeze()
                end
+
                ------------------------------------------------------------
                -- Find error and output gradients at this time step
                ------------------------------------------------------------
@@ -285,13 +289,13 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                --local currentErr = criterion:forward({currentOutput,
                --currentOutput[2]},
                
-               local t = targets[i]
+               local t = targets[i][dataset.repetitions]
                if opt.supervised then
                   t = targets[i][j] -- sequence of targets in supervised
                end
 
                if j == #clones - 1 then
-                  if opt.simplified then
+                  if opt.simplified or not opt.noProb then
                      err_discrete = getDiffsTrain(currentOutput[1], t, 1, dataset.repetitions)
                   else
                      err_discrete = getDiffsTrain(currentOutput, t, 1, dataset.repetitions)
@@ -302,6 +306,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                if opt.simplified then
                   toCriterion = currentOutput[1]
                end
+
+               --print(toCriterion)
 
                local currentErr = criterion:forward(toCriterion,t)
                local currentDf_do = criterion:backward(toCriterion,t)
@@ -326,10 +332,13 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                clones[j]:backward(cloneInputs[j], currentDf_do)
 
                err = err + currentErr
+
             end
+
             f = f + err
             f_discrete = f_discrete + err_discrete
             collectgarbage()
+
             if opt.sleep then sys.sleep(tonumber(opt.sleep)) end
          end
 

@@ -95,7 +95,7 @@ cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
 cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
-cmd:option('-modelName', 'LSTM', 'name of model to be used for data dumps')
+cmd:option('-modelName', 'LSTMProb', 'name of model to be used for data dumps')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------
@@ -121,12 +121,14 @@ local ShiftLearn = require('ShiftLearn')
 --------------------------------------------------------------------------------
 -- TODO should integrate these options nicely
 --------------------------------------------------------------------------------
+
 opt.separateValAddr = true 
 opt.noInput = true
-opt.noProb = true
+opt.noProb = false 
 opt.simplified = false 
-opt.supervised = true 
+opt.supervised = false 
 opt.maxForwardSteps = dataset.repetitions
+
 --------------------------------------------------------------------------------
 
 --local model = Model.create(opt, ShiftLearn.createWrapper,
@@ -146,33 +148,8 @@ for k,v in pairs(params) do
         torch.sqrt(3 / s[#s])) end)
 end
 
---------------------------------------------------------------------------------
--- Display parameters before training
---------------------------------------------------------------------------------
-
---local winsInitial = {}
---local params, _ = model:parameters()
---for k,v in pairs(params) do
-   --if v:nDimension() == 1 then
-      --winsInitial[k] = image.display{
-         --image=v:view(1,-1),
-         --win=winsInitial[k],
-         --zoom=35,
-         --legend = "initial bias " .. k
-      --}
-   --else
-      --winsInitial[k] = image.display{
-         --image=v,
-         --win=winsInitial[k],
-         --zoom=35,
-         --legend = "initial params " .. k
-      --}
-   --end
---end
-
 model.modelName = opt.modelName 
 
---print(dataset.repetitions)
 --------------------------------------------------------------------------------
 -- Train the model
 --------------------------------------------------------------------------------
@@ -196,17 +173,10 @@ local avg_errs_discrete = {}
 for i=1,opt.epochs do
    model.itNum = i
 
-   local epoch_errors = trainModel(model, mse, dataset, opt, optim.adam)
+   local epoch_errors = trainModel(model, nn.PNLLCriterion, dataset, opt, optim.adam)
 
    local epoch_errors_mse = epoch_errors[1][1]
    local epoch_errors_discrete = epoch_errors[1][2]
-   --print("epoch err")
-   --print(epoch_errors_mse)
-   --print("end epoch err")
-   --print("epoch ---------------")
-   --print(epoch_errors_mse)
-   --print(epoch_errors_discrete)
-   --print("end epoch----------------")
 
    epochs_all_errors_mse[#epochs_all_errors_mse + 1] = unpack(epoch_errors_mse)
    epochs_all_errors_discrete[#epochs_all_errors_discrete + 1] =
@@ -225,63 +195,37 @@ for i=1,opt.epochs do
 
    avg_mse = avg_mse / (#epoch_errors_mse)
    avg_errs_mse[#avg_errs_mse + 1] = avg_mse
-   print("num")
-   --print(#epochs_all_errors_discrete)
-   --print(epochs_all_errors_discrete)
-   print("end num")
+
    avg_discrete = avg_discrete / (#epoch_errors_discrete)
    avg_errs_discrete[#avg_errs_discrete + 1] = avg_discrete
-
-   local accuracy = evalModelSupervised(model, dataset, mse, opt)
-   --print(accuracy)
+   local accuracy = {}
+   if opt.noProb and opt.supervised then
+      accuracy = evalModelSupervised(model, dataset, mse, opt)
+   else
+      accuracy = evalModelOnDataset(model, dataset, nn.PNLLCriterion, opt)
+   end
    epochs_all_accuracies[#epochs_all_accuracies + 1] = accuracy
 
    epochs_all_accuracies_mse[#epochs_all_accuracies_mse + 1] = accuracy[1]
    epochs_all_accuracies_discrete[#epochs_all_accuracies_discrete + 1] =
       accuracy[2]
   print("end epoch")
+
 end
 
-
---local plot_dict = {}
-
---for i=1,#epochs_all_errors do
-   --plot_dict[i] = { "epoch num " .. tostring(i),
-      --torch.Tensor(epochs_all_errors[i]) }
---end
-
-
---gnuplot.pngfigure("data_dumps/errors_training_" .. model.modelName .. 
-   --"R" .. tostring(dataset.repetitions) .. ".png")
---gnuplot.xlabel("Batch no.")
---gnuplot.ylabel("Train Error")
---gnuplot.plot(unpack(plot_dict)) -- this has to change
---gnuplot.plotflush()
-
-
---gnuplot.pngfigure("data_dumps/errors_eval_" .. model.modelName ..
-   --"R" .. tostring(dataset.repetitions) .. ".png")
---gnuplot.xlabel("Epoch no.")
---gnuplot.ylabel("Eval Error")
---gnuplot.plot(torch.Tensor(epochs_all_accuracies)) -- this has to change
---gnuplot.plotflush()
-
---print(torch.Tensor(avg_errs))
---print(torch.Tensor(epochs_all_accuracies))
-
-print(avg_errs_discrete)
-print(avg_errs_mse)
-print("--------------------")
-print(epochs_all_accuracies_discrete)
-print(epochs_all_accuracies_mse)
-print("--------------------")
+--print(avg_errs_discrete)
+--print(avg_errs_mse)
+--print("--------------------")
+--print(epochs_all_accuracies_discrete)
+--print(epochs_all_accuracies_mse)
+--print("--------------------")
 
 gnuplot.pngfigure("data_dumps/errors_all_avg_discrete_" .. model.modelName .. 
    "R" .. tostring(dataset.repetitions) .. ".png")
 gnuplot.xlabel("Epoch no.")
 gnuplot.ylabel("Error(%)")
 gnuplot.plot({'Train error',torch.Tensor(avg_errs_discrete)},
-   {'Eval error', torch.Tensor(epochs_all_accuracies_discrete)}) -- this has to change
+   {'Eval error', torch.Tensor(epochs_all_accuracies_discrete)})
 gnuplot.plotflush()
 
 
@@ -290,9 +234,5 @@ gnuplot.pngfigure("data_dumps/errors_all_avg_mse_" .. model.modelName ..
 gnuplot.xlabel("Epoch no.")
 gnuplot.ylabel("Error")
 gnuplot.plot({'Train error', torch.Tensor(avg_errs_mse)},
-   {'Eval error', torch.Tensor(epochs_all_accuracies_mse)}) -- this has to change
+   {'Eval error', torch.Tensor(epochs_all_accuracies_mse)})
 gnuplot.plotflush()
-
---------------------------------------------------------------------------------
--- Evaluate model
---------------------------------------------------------------------------------
