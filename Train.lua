@@ -369,7 +369,9 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
       if optimMethod == optim.asgd then
          _, _, average = optimMethod(feval, parameters, optimState)
       else
-         optimMethod(feval, parameters, optimState)
+         config = {}
+         config.learningRate = 0.000000001
+         optimMethod(feval, parameters, config, optimState)
       end
       if opt.saveEvery ~= nil and learnIterations % opt.saveEvery == 0 then
          print(string.format("%d / %d", learnIterations, opt.saveEvery))

@@ -164,7 +164,7 @@ local epochs_all_accuracies_discrete = {}
 local epochs_all_errors_discrete = {}
 
 opt.simplified = false 
-opt.epochs = 2 
+opt.epochs = 5 
 
 local avg_errs = {}
 local avg_errs_mse = {}
@@ -213,12 +213,6 @@ for i=1,opt.epochs do
 
 end
 
---print(avg_errs_discrete)
---print(avg_errs_mse)
---print("--------------------")
---print(epochs_all_accuracies_discrete)
---print(epochs_all_accuracies_mse)
---print("--------------------")
 
 gnuplot.pngfigure("data_dumps/errors_all_avg_discrete_" .. model.modelName .. 
    "R" .. tostring(dataset.repetitions) .. ".png")

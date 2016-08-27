@@ -10,35 +10,45 @@ require "gnuplot"
 -- Evaluate a model trained on a certain dataset
 --------------------------------------------------------------------------------
 function evalModelOnDataset(model, dataset, criterion, opt)
-    local testSet = dataset.testSet
-    local data = testSet[1]
-    local labels = testSet[2]
-    local errAvg = 0.0
-    local errAvg_discrete = 0.0
+   local testSet = dataset.testSet
+   local data = testSet[1]
+   local labels = testSet[2]
+   local errAvg = 0.0
+   local errAvg_discrete = 0.0
+   local prevAdr = torch.zeros(opt.memorySize)
+   prevAdr[1] = 1
 
-    for i=1,data:size(1) do
+   for i=1,data:size(1) do
 
-        local currentInstance = data[i]
-        local terminated = false
-        local numIterations = 0
-        local finalOutput = {}
+      local currentInstance = data[i]
+      local terminated = false
+      local numIterations = 0
+      local finalOutput = {}
 
-        while not terminated and numIterations < opt.maxForwardSteps do
+      while not terminated and numIterations < opt.maxForwardSteps do
 
-            local memory = currentInstance
-            local output = model:forward(currentInstance)
+         local memory = currentInstance
+         if opt.simplified then
+            output = model:forward({memory, prevAdr})
+         else
+            output = model:forward(memory)
+         end
 
-            local prob = output[2][1]
+         --local output = model:forward(currentInstance)
 
-            if prob > 0.9 then
-                terminated = true
-            end
-            print(prob)
-            memory = output[1]
-            numIterations = numIterations + 1
-            finalOutput = output
+         local prob = output[#output][1]
+         prevAdr = output[2]
 
-        end
+         if prob > 0.9 then
+            terminated = true
+         end
+
+         --print(prob)
+         memory = output[1]
+         numIterations = numIterations + 1
+         finalOutput = output
+
+      end
 
         err = criterion:forward(finalOutput, labels[i][dataset.repetitions])
         errAvg = errAvg + err
