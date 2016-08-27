@@ -68,9 +68,6 @@ function PNLLCriterion:sumDifference(input, target)
    -- Vectorize loss calculus
    ----------------------------------------------------------------------------
    local f1 = memory:clone():log():cmul(target)  -- tk * log(mk)
-   --print(memory)
-   --print(f1)
-   --sys.sleep(2)
    local f2a = torch.ones(memSize) - target
    local f2b = torch.log(torch.ones(memSize) - memory) --(1-tk) * log(1-mk)
    local f2 = f2a:cmul(f2b) -- tk * log(mk) + (1 - tk) * log(1 - mk)
@@ -212,23 +209,28 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
 
             while (not terminated) and numIterations <= maxForwardSteps do
                local currentInput = nil
+
                if inputsIndex <= inputs[i]:size(1) then
                   currentInput = inputs[i][inputsIndex]
                else
                   currentInput = torch.zeros(inputs[i][1]:size())
                end
+
                if opt.noInput then
                   cloneInputs[numIterations] = memory
                else
                   cloneInputs[numIterations] = {memory, currentInput}
                end
 
+               
+
                if opt.simplified then --propagating previous address
                   cloneInputs[numIterations] = {memory, prevAddr}
                end
 
-               local output = clones[numIterations]:forward(
-                  cloneInputs[numIterations])
+               print(cloneInputs[numIterations])
+
+               local output = clones[numIterations]:forward(cloneInputs[numIterations])
 
                cloneOutputs[numIterations] = output -- needed for Criterion
 
@@ -311,14 +313,14 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                end
 
                local toCriterion = currentOutput
+
                if opt.simplified then
                   toCriterion = currentOutput[1]
                end
 
-               --print(toCriterion)
+               local currentErr = criterion:forward(toCriterion, t)
 
-               local currentErr = criterion:forward(toCriterion,t)
-               local currentDf_do = criterion:backward(toCriterion,t)
+               local currentDf_do = criterion:backward(toCriterion, t)
 
                if opt.simplified then
                   local dfPrevAddr = torch.zeros(prevAddr:size())

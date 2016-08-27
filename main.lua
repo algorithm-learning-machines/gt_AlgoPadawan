@@ -125,16 +125,16 @@ local ShiftLearn = require('ShiftLearn')
 opt.separateValAddr = true 
 opt.noInput = true
 opt.noProb = false 
-opt.simplified = false 
-opt.supervised = false 
+opt.simplified = true --false 
+opt.supervised = true 
 opt.maxForwardSteps = dataset.repetitions
 
 --------------------------------------------------------------------------------
 
---local model = Model.create(opt, ShiftLearn.createWrapper,
-   --ShiftLearn.createWrapper, nn.Identity, "modelName")
+local model = Model.create(opt, ShiftLearn.createWrapper,
+   ShiftLearn.createWrapper, nn.Identity, "modelName")
 
-local model = Model.create(opt)
+--local model = Model.create(opt)
 
 if opt.giveMeModel then
    return model
@@ -150,6 +150,9 @@ end
 
 model.modelName = opt.modelName 
 
+
+print(model:forward({torch.Tensor(5,5), torch.Tensor(5)}))
+
 --------------------------------------------------------------------------------
 -- Train the model
 --------------------------------------------------------------------------------
@@ -163,7 +166,7 @@ local epochs_all_accuracies_mse = {}
 local epochs_all_accuracies_discrete = {}
 local epochs_all_errors_discrete = {}
 
-opt.simplified = false 
+opt.simplified = true --false 
 opt.epochs = 5 
 
 local avg_errs = {}
@@ -172,8 +175,12 @@ local avg_errs_discrete = {}
 
 for i=1,opt.epochs do
    model.itNum = i
-
-   local epoch_errors = trainModel(model, nn.PNLLCriterion, dataset, opt, optim.adam)
+   local epoch_errors = {}
+   if not opt.noProb then
+      epoch_errors = trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.adam)
+   else
+      epoch_errors = trainModel(model, nn.MSECriterion(), dataset, opt, optim.adam)
+   end
 
    local epoch_errors_mse = epoch_errors[1][1]
    local epoch_errors_discrete = epoch_errors[1][2]
@@ -202,15 +209,13 @@ for i=1,opt.epochs do
    if opt.noProb and opt.supervised then
       accuracy = evalModelSupervised(model, dataset, mse, opt)
    else
-      accuracy = evalModelOnDataset(model, dataset, nn.PNLLCriterion, opt)
+      accuracy = evalModelOnDataset(model, dataset, nn.PNLLCriterion(), opt)
    end
    epochs_all_accuracies[#epochs_all_accuracies + 1] = accuracy
 
    epochs_all_accuracies_mse[#epochs_all_accuracies_mse + 1] = accuracy[1]
    epochs_all_accuracies_discrete[#epochs_all_accuracies_discrete + 1] =
       accuracy[2]
-  print("end epoch")
-
 end
 
 
