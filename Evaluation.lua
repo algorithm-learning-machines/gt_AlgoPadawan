@@ -34,7 +34,6 @@ function evalModelOnDataset(model, dataset, criterion, opt)
             output = model:forward(memory)
          end
 
-         --local output = model:forward(currentInstance)
 
          local prob = output[#output][1]
          prevAdr = output[2]
@@ -43,30 +42,37 @@ function evalModelOnDataset(model, dataset, criterion, opt)
             terminated = true
          end
 
-         --print(prob)
          memory = output[1]
          numIterations = numIterations + 1
          finalOutput = output
 
       end
+      
+     
+      local comp_index = 0
+      local comp_memory = {}
+      if dataset.taskName == "repeat_k" then
+         comp_index = dataset.repetitions
+         comp_memory = labels[i][dataset.repetitions]
+      elseif dataset.taskName == "binary_addition" then
+         comp_index = 3
+         comp_memory = labels[i]
+      end
+      if opt.simplified or not opt.noProb then
+         err_discrete = getDiffs(finalOutput[1], comp_memory, 1,
+         comp_index)
+      else
+         err_discrete = getDiffs(finalOutput, comp_memory, 1,
+         comp_index)
+      end
 
-        err = criterion:forward(finalOutput, labels[i][dataset.repetitions])
-        errAvg = errAvg + err
-        
-        if opt.simplified or not opt.noProb then
-           err_discrete = getDiffs(finalOutput[1], labels[i][dataset.repetitions], 1,
-           dataset.repetitions)
-        else
-           err_discrete = getDiffs(finalOutput, labels[i][dataset.repetitions], 1,
-            dataset.repetitions)
-        end
+      err = criterion:forward(finalOutput, comp_memory)
+      errAvg = errAvg + err
+      errAvg_discrete = errAvg_discrete + err_discrete 
 
-        errAvg_discrete = errAvg_discrete + err_discrete 
-
-
-     end
-    ----------------------------------------------------------------------------
-    -- Average error
+   end
+   ----------------------------------------------------------------------------
+   -- Average error
     ----------------------------------------------------------------------------
     errAvg = errAvg / data:size(1)
     errAvg_discrete = errAvg_discrete / data:size(1)
@@ -122,32 +128,30 @@ function evalModelSupervised(model, dataset, criterion, opt)
               output = model:forward(memory)
               err = criterion:forward(output, labels[i][j])
            end
-            
-            --output = model:forward(memory)
-                         
-            if j == opt.maxForwardSteps then
-               if opt.simplified then
-                  err_discrete = getDiffs(output[1], labels[i][j], 1,
-                     dataset.repetitions)
-               else
-                  err_discrete = getDiffs(output, labels[i][j], 1,
-                     dataset.repetitions)
-               end
-            end
-            
-            grandErr = grandErr + err
-            if opt.simplified then
-               prevAdr = output[2]
-               memory = output[1]
-            else 
-               memory = output
-            end
-         end
+
+           if j == opt.maxForwardSteps then
+              if opt.simplified then
+                 err_discrete = getDiffs(output[1], labels[i][j], 1,
+                 dataset.repetitions)
+              else
+                 err_discrete = getDiffs(output, labels[i][j], 1,
+                 dataset.repetitions)
+              end
+           end
+
+           grandErr = grandErr + err
+           if opt.simplified then
+              prevAdr = output[2]
+              memory = output[1]
+           else 
+              memory = output
+           end
+        end
         grandErr = grandErr / opt.maxForwardSteps 
-         
+
         errAvg = errAvg + grandErr
         errAvg_discrete = errAvg_discrete + err_discrete 
-    end
+     end
 
     ----------------------------------------------------------------------------
     -- Average error

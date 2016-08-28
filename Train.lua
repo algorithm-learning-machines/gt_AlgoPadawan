@@ -97,10 +97,7 @@ function PNLLCriterion:updateGradInput(input, target)
    dMemory = dMemory * (-1)
    self.gradInput = {dMemory, torch.Tensor{dProb}}
 
-   --print(self.gradInput[2])
-
    return self.gradInput
-
 end
 
 function getDiffsTrain(outputMem, targetMem, begin_ix, end_ix)
@@ -140,7 +137,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
    local memSize = tonumber(opt.memorySize)
    local batchSize = tonumber(opt.batchSize)
    local maxForwardSteps = tonumber(opt.maxForwardSteps)
-
    ----------------------------------------------------------------------------
    -- Work in batches
    ----------------------------------------------------------------------------
@@ -221,14 +217,11 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                else
                   cloneInputs[numIterations] = {memory, currentInput}
                end
-
                
 
                if opt.simplified then --propagating previous address
                   cloneInputs[numIterations] = {memory, prevAddr}
                end
-
-               print(cloneInputs[numIterations])
 
                local output = clones[numIterations]:forward(cloneInputs[numIterations])
 
@@ -259,7 +252,6 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 clones[numIterations] = cloneModel(model) -- clone model
 
                -- needed for backprop
-               --TODO here used to be output[1]
               
                local old_memory = memory
 
@@ -298,17 +290,28 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                -- TODO for parallel criterion here
                --local currentErr = criterion:forward({currentOutput,
                --currentOutput[2]},
-               
-               local t = targets[i][dataset.repetitions]
-               if opt.supervised then
-                  t = targets[i][j] -- sequence of targets in supervised
-               end
+               local comp_index = 0
+               local comp_memory = {}
+               local t = {}
 
+               if dataset.taskName == "repeat_k" then
+                  comp_index = dataset.repetitions
+
+                  t = targets[i][dataset.repetitions]
+                  if opt.supervised then
+                     t = targets[i][j] -- sequence of targets in supervised
+                  end
+
+               elseif dataset.taskName == 'binary_addition' then
+                  comp_index = 3
+                  t = targets[i]
+               end 
+               
                if j == #clones - 1 then
                   if opt.simplified or not opt.noProb then
-                     err_discrete = getDiffsTrain(currentOutput[1], t, 1, dataset.repetitions)
+                     err_discrete = getDiffsTrain(currentOutput[1], t, 1, comp_index)
                   else
-                     err_discrete = getDiffsTrain(currentOutput, t, 1, dataset.repetitions)
+                     err_discrete = getDiffsTrain(currentOutput, t, 1, comp_index)
                   end
                end
 
@@ -356,11 +359,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          gradParameters:div(#inputs)
          f = f/#inputs
          f_discrete = f_discrete/#inputs
-         --print(f_discrete)
          errors[#errors + 1] = f -- corresponds to one batch
          errors_discrete[#errors_discrete + 1] = f_discrete
-         --print(errors_discrete)
-         --errors_discrete[#errors_discrete + 1] = getDiffs()
          
          -- return f and df/dX
          --gradParameters:add(0.0001)
@@ -372,7 +372,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          _, _, average = optimMethod(feval, parameters, optimState)
       else
          config = {}
-         config.learningRate = 0.000000001
+         config.learningRate = 0.001
          optimMethod(feval, parameters, config, optimState)
       end
       if opt.saveEvery ~= nil and learnIterations % opt.saveEvery == 0 then

@@ -74,10 +74,10 @@ function Dataset.create(opt)
       local trainNumbers = {}
       trainSet, trainNumbers = Dataset.__genBinaryOpSet(
       self.trainSize, self.vectorSize, self.minVal, self.maxVal, {},
-      function(a,b) return a + b end)
+      function(a,b) return a + b end, self.memorySize)
       testSet, _ = Dataset.__genBinaryOpSet(self.testSize,
       self.vectorSize, self.minVal, self.maxVal, trainNumbers,
-      function(a,b) return a + b end)
+      function(a,b) return a + b end, self.memorySize)
 
    elseif opt.datasetType == "binary_cmmdc" then
       local trainNumbers = {}
@@ -194,6 +194,7 @@ function Dataset.__genRepeatSet(setSize, vectorSize, minVal, maxVal,
       end
       input[i][1] = torch.Tensor{times}
       inputOriginal[tostring(times)] = times
+
       ------------------------------------------------------------------------
       -- repeat the pattern specified times
       -- fill rest of memory with zero
@@ -215,27 +216,39 @@ end
 -- f -> function that gets executed on input
 --------------------------------------------------------------------------------
 function Dataset.__genBinaryOpSet(setSize, vectorSize, minVal,
-   maxVal, exclusionSet, f)
-   local input = Tensor(setSize,  2, vectorSize)
-   local target = Tensor(setSize, 1, vectorSize)
+   maxVal, exclusionSet, f, memorySize)
+   local input = Tensor(setSize,  memorySize, vectorSize)
+   local target = Tensor(setSize, memorySize, vectorSize)
    local inputOriginal = {}
+
    for i=1,setSize do
-      local a = math.random(minVal, maxVal)
-      local b = math.random(minVal, maxVal)
+      local a = math.random(minVal, maxVal / 2)
+      local b = math.random(minVal, maxVal / 2)
       while (inputOriginal[tostring(a).."_"..tostring(b)] ~= nil) or
          (exclusionSet[tostring(a).."_"..tostring(b)] ~= nil) do
-         a = math.random(minVal, maxVal)
-         b = math.random(minVal, maxVal)
+         a = math.random(minVal, maxVal / 2)
+         b = math.random(minVal, maxVal / 2)
       end
       inputOriginal[tostring(a).."_"..tostring(b)] = {a, b}
       local c = f(a,b)
-      local aVec =Dataset.__numToBits(a, vectorSize)
-      local bVec =Dataset.__numToBits(b, vectorSize)
-      local cVec =Dataset.__numToBits(c, vectorSize)
-      local entry = torch.cat(aVec,bVec,2)
+      local aVec = Dataset.__numToBits(a, vectorSize)
+      local bVec = Dataset.__numToBits(b, vectorSize)
+      local cVec = Dataset.__numToBits(c, vectorSize)
+
+      local entry = torch.cat(aVec, bVec, 2)
+      local randomPart = torch.zeros(memorySize, vectorSize)
       entry = entry:t()
-      input[i] = entry
-      target[i] = cVec
+
+      local inputFiller = randomPart[{{3, memorySize}}]
+      local targetFiller = randomPart[{{4, memorySize}}]
+
+      local outputMemory = nil
+
+      outputMemory = torch.cat(entry, cVec:t(), 1)
+      outputMemory = torch.cat(outputMemory, targetFiller, 1)
+      
+      input[i] = torch.cat(entry, inputFiller, 1) 
+      target[i] = outputMemory 
    end
    return {input, target}, inputOriginal
 end
@@ -332,14 +345,11 @@ function Dataset.__genRepeatK(setSize, vectorSize,
          else
             outputMemory = outputRepeated
          end
+
          labels[i][j] = outputMemory
       end
-
-      --local inputMemory = torch.repeatTensor(torch.zeros(1, vectorSize),
-      --memorySize - 1, 1)
-
-
    end
+
    return {inputs, labels}, inputOriginal
 
 end

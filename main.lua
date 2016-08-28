@@ -57,14 +57,15 @@ print("Running training tests...")
 --------------------------------------------------------------------------------
 
 local datasetOpt = {}
-datasetOpt.vectorSize = 5
+datasetOpt.vectorSize = 6
 datasetOpt.trainSize = 100
 datasetOpt.testSize = 30
-datasetOpt.datasetType = 'repeat_k'
+datasetOpt.datasetType = 'binary_addition'
 datasetOpt.minVal = 1
-datasetOpt.maxVal = 31
+datasetOpt.maxVal = 31 
 datasetOpt.memorySize = 5
-datasetOpt.repetitions = 2
+datasetOpt.repetitions = 3
+datasetOpt.maxForwardSteps = 5
 
 assert(datasetOpt.maxVal < 2 ^ datasetOpt.vectorSize, "Vector size too small")
 
@@ -104,6 +105,7 @@ cmd:option('-plotMemory', true, 'Should we plot memory during training')
 cmd:option('-plotAddress', true, 'Should we plot generated addresses')
 cmd:option('-plotParams', true, 'Should we plot weights during training')
 cmd:option('-sleep', 0, 'Should the beauty sleep?')
+
 --------------------------------------------------------------------------------
 -- Hacks section
 --------------------------------------------------------------------------------
@@ -125,16 +127,16 @@ local ShiftLearn = require('ShiftLearn')
 opt.separateValAddr = true 
 opt.noInput = true
 opt.noProb = false 
-opt.simplified = true --false 
-opt.supervised = true 
+opt.simplified = false 
+opt.supervised = false 
 opt.maxForwardSteps = dataset.repetitions
 
 --------------------------------------------------------------------------------
 
-local model = Model.create(opt, ShiftLearn.createWrapper,
-   ShiftLearn.createWrapper, nn.Identity, "modelName")
+--local model = Model.create(opt, ShiftLearn.createWrapper,
+   --ShiftLearn.createWrapper, nn.Identity, "modelName")
 
---local model = Model.create(opt)
+local model = Model.create(opt)
 
 if opt.giveMeModel then
    return model
@@ -151,8 +153,6 @@ end
 model.modelName = opt.modelName 
 
 
-print(model:forward({torch.Tensor(5,5), torch.Tensor(5)}))
-
 --------------------------------------------------------------------------------
 -- Train the model
 --------------------------------------------------------------------------------
@@ -166,8 +166,13 @@ local epochs_all_accuracies_mse = {}
 local epochs_all_accuracies_discrete = {}
 local epochs_all_errors_discrete = {}
 
-opt.simplified = true --false 
+opt.simplified = false 
 opt.epochs = 5 
+if not opt.simplified then
+   opt.maxForwardSteps = 5
+else
+   opt.maxForwardSteps = dataset.repetitions
+end
 
 local avg_errs = {}
 local avg_errs_mse = {}
@@ -218,9 +223,15 @@ for i=1,opt.epochs do
       accuracy[2]
 end
 
+local modelString = ""
 
-gnuplot.pngfigure("data_dumps/errors_all_avg_discrete_" .. model.modelName .. 
-   "R" .. tostring(dataset.repetitions) .. ".png")
+if dataset.taskName == "repeat_k" then
+   modelString =  model.modelName .. "R" .. tostring(dataset.repetitions)
+elseif dataset.taskName == "binary_addition" then
+   modelString =  model.modelName .. "A" .. tostring(dataset.maxVal)
+end
+
+gnuplot.pngfigure("data_dumps/errors_all_avg_discrete_" .. modelString .. ".png")
 gnuplot.xlabel("Epoch no.")
 gnuplot.ylabel("Error(%)")
 gnuplot.plot({'Train error',torch.Tensor(avg_errs_discrete)},
@@ -228,8 +239,7 @@ gnuplot.plot({'Train error',torch.Tensor(avg_errs_discrete)},
 gnuplot.plotflush()
 
 
-gnuplot.pngfigure("data_dumps/errors_all_avg_mse_" .. model.modelName .. 
-   "R" .. tostring(dataset.repetitions) .. ".png")
+gnuplot.pngfigure("data_dumps/errors_all_avg_mse_" .. modelString .. ".png")
 gnuplot.xlabel("Epoch no.")
 gnuplot.ylabel("Error")
 gnuplot.plot({'Train error', torch.Tensor(avg_errs_mse)},

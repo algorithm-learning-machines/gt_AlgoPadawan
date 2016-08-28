@@ -56,7 +56,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
       reshapedMem = nn.Reshape(memSize * vectorSize)(initialMem)
    end
 
-   local AR = nn.GRU -- LSTM 
+   local AR = nn.LSTM -- LSTM 
    params = {memSize * vectorSize, memSize, RNN_steps}
    linkedNode = reshapedMem
 
