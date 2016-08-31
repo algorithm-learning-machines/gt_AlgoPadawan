@@ -57,15 +57,15 @@ print("Running training tests...")
 --------------------------------------------------------------------------------
 
 local datasetOpt = {}
-datasetOpt.vectorSize = 6
+datasetOpt.vectorSize = 5
 datasetOpt.trainSize = 100
 datasetOpt.testSize = 30
-datasetOpt.datasetType = 'binary_addition'
+datasetOpt.datasetType = 'repeat_k'
 datasetOpt.minVal = 1
 datasetOpt.maxVal = 31 
 datasetOpt.memorySize = 5
-datasetOpt.repetitions = 3
-datasetOpt.maxForwardSteps = 5
+datasetOpt.repetitions = 2 
+--datasetOpt.maxForwardSteps = 5
 
 assert(datasetOpt.maxVal < 2 ^ datasetOpt.vectorSize, "Vector size too small")
 
@@ -96,7 +96,7 @@ cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
 cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
-cmd:option('-modelName', 'LSTMProb', 'name of model to be used for data dumps')
+cmd:option('-modelName', 'LSTM', 'name of model to be used for data dumps')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------
@@ -126,10 +126,16 @@ local ShiftLearn = require('ShiftLearn')
 
 opt.separateValAddr = true 
 opt.noInput = true
-opt.noProb = false 
+opt.noProb = true 
 opt.simplified = false 
-opt.supervised = false 
-opt.maxForwardSteps = dataset.repetitions
+opt.supervised = true 
+
+if not opt.noProb then
+   opt.maxForwardSteps = 5
+else
+   opt.maxForwardSteps = dataset.repetitions
+end
+opt.epochs = 5 
 
 --------------------------------------------------------------------------------
 
@@ -165,15 +171,6 @@ local epochs_all_accuracies = {}
 local epochs_all_accuracies_mse = {}
 local epochs_all_accuracies_discrete = {}
 local epochs_all_errors_discrete = {}
-
-opt.simplified = false 
-opt.epochs = 5 
-if not opt.simplified then
-   opt.maxForwardSteps = 5
-else
-   opt.maxForwardSteps = dataset.repetitions
-end
-
 local avg_errs = {}
 local avg_errs_mse = {}
 local avg_errs_discrete = {}
@@ -184,7 +181,7 @@ for i=1,opt.epochs do
    if not opt.noProb then
       epoch_errors = trainModel(model, nn.PNLLCriterion(), dataset, opt, optim.adam)
    else
-      epoch_errors = trainModel(model, nn.MSECriterion(), dataset, opt, optim.adam)
+      epoch_errors = trainModel(model, mse, dataset, opt, optim.adam)
    end
 
    local epoch_errors_mse = epoch_errors[1][1]
@@ -193,7 +190,8 @@ for i=1,opt.epochs do
    epochs_all_errors_mse[#epochs_all_errors_mse + 1] = unpack(epoch_errors_mse)
    epochs_all_errors_discrete[#epochs_all_errors_discrete + 1] =
       unpack(epoch_errors_discrete) 
-
+   --print(epochs_all_errors_mse)
+   --print(epochs_all_errors_discrete) 
    avg_mse = 0.0 
    avg_discrete = 0.0
 
@@ -221,8 +219,9 @@ for i=1,opt.epochs do
    epochs_all_accuracies_mse[#epochs_all_accuracies_mse + 1] = accuracy[1]
    epochs_all_accuracies_discrete[#epochs_all_accuracies_discrete + 1] =
       accuracy[2]
-end
 
+   --print(avg_discrete)
+end
 local modelString = ""
 
 if dataset.taskName == "repeat_k" then
@@ -230,6 +229,13 @@ if dataset.taskName == "repeat_k" then
 elseif dataset.taskName == "binary_addition" then
    modelString =  model.modelName .. "A" .. tostring(dataset.maxVal)
 end
+
+print(avg_errs_mse)
+print(avg_errs_discrete)
+
+--print(epochs_all_accuracies_mse)
+--print(epochs_all_accuracies_discrete)
+
 
 gnuplot.pngfigure("data_dumps/errors_all_avg_discrete_" .. modelString .. ".png")
 gnuplot.xlabel("Epoch no.")

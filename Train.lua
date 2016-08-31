@@ -223,6 +223,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                   cloneInputs[numIterations] = {memory, prevAddr}
                end
 
+               --print(cloneInputs[numIterations])
+
                local output = clones[numIterations]:forward(cloneInputs[numIterations])
 
                cloneOutputs[numIterations] = output -- needed for Criterion
@@ -252,9 +254,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                 clones[numIterations] = cloneModel(model) -- clone model
 
                -- needed for backprop
-              
-               local old_memory = memory
-
+               --print(output[1]) 
+               --print(memory)
                if not opt.simplified and opt.noInput and opt.noProb then
                   memory = output
                else
@@ -309,7 +310,9 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                
                if j == #clones - 1 then
                   if opt.simplified or not opt.noProb then
+                     --print(currentOutput[1])
                      err_discrete = getDiffsTrain(currentOutput[1], t, 1, comp_index)
+                     --print('single_err ' .. err_discrete)
                   else
                      err_discrete = getDiffsTrain(currentOutput, t, 1, comp_index)
                   end
@@ -358,7 +361,8 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          -- normalize gradients and f(X)
          gradParameters:div(#inputs)
          f = f/#inputs
-         f_discrete = f_discrete/#inputs
+         f_discrete = f_discrete * 1.0 /#inputs
+         --print('f_discrete '..f_discrete)
          errors[#errors + 1] = f -- corresponds to one batch
          errors_discrete[#errors_discrete + 1] = f_discrete
          
@@ -371,9 +375,9 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
       if optimMethod == optim.asgd then
          _, _, average = optimMethod(feval, parameters, optimState)
       else
-         config = {}
-         config.learningRate = 0.001
-         optimMethod(feval, parameters, config, optimState)
+         --config = {}
+         --config.learningRate = 0.0001
+         optimMethod(feval, parameters, optimState)
       end
       if opt.saveEvery ~= nil and learnIterations % opt.saveEvery == 0 then
          print(string.format("%d / %d", learnIterations, opt.saveEvery))
@@ -410,6 +414,7 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
       --gnuplot.plot(torch.Tensor(errors)) -- this has to change
       --gnuplot.plotflush()
       --print(errors_discrete)
+      
       epoch_errors[#epoch_errors + 1] = {errors, errors_discrete}
    end
    return epoch_errors

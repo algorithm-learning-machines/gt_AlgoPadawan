@@ -236,7 +236,7 @@ function Dataset.__genBinaryOpSet(setSize, vectorSize, minVal,
       local cVec = Dataset.__numToBits(c, vectorSize)
 
       local entry = torch.cat(aVec, bVec, 2)
-      local randomPart = torch.zeros(memorySize, vectorSize)
+      local randomPart = torch.rand(memorySize, vectorSize)
       entry = entry:t()
 
       local inputFiller = randomPart[{{3, memorySize}}]
@@ -321,7 +321,7 @@ function Dataset.__genRepeatK(setSize, vectorSize,
       --local randomPart = torch.repeatTensor(torch.rand(1, vectorSize),
          --memorySize - 1, 1)
 
-      local randomPart = torch.zeros(memorySize - 1, vectorSize)
+      local randomPart = torch.rand(memorySize - 1, vectorSize)
       --torch.rand(memorySize - 1, vectorSize)
 
       inputMemory = torch.cat(template:t(), randomPart, 1)

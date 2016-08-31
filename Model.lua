@@ -169,8 +169,8 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
 
    -- memory update
    local memEraser = nn.CSubTable()({initialMem, AAT_M_t_1})
-   local intMem = nn.CAddTable()({memEraser, adder})
-   local finMem = nn.Sigmoid()(intMem)--nn.CAddTable()({memEraser, adder})
+   local finMem = nn.CAddTable()({memEraser, adder})
+   --local finMem = nn.Sigmoid()(intMem)--nn.CAddTable()({memEraser, adder})
    
    ----------------------------------------------------------------------------
 
