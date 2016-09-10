@@ -158,6 +158,7 @@ function Dataset.__genRepeatOnce(
       memorySize - 1, 1)
       inputMemory = torch.cat(template:t(), inputMemory, 1)
       inputs[i] = inputMemory
+      print(inputMemory)
       local idx = torch.linspace(1,inputs[i]:size(1), inputs[i]:size(1)):long()
       idx[1], idx[2] = 2, 1
       inputs[i] = inputs[i]:index(1, idx)

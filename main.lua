@@ -65,7 +65,7 @@ datasetOpt.minVal = 1
 datasetOpt.maxVal = 31 
 datasetOpt.memorySize = 5
 datasetOpt.repetitions = 2 
---datasetOpt.maxForwardSteps = 5
+datasetOpt.maxForwardSteps = 5
 
 assert(datasetOpt.maxVal < 2 ^ datasetOpt.vectorSize, "Vector size too small")
 
@@ -96,7 +96,7 @@ cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
 cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
-cmd:option('-modelName', 'LSTM', 'name of model to be used for data dumps')
+cmd:option('-modelName', 'ShiftKDemo', 'name of model to be used for data dumps')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ local ShiftLearn = require('ShiftLearn')
 opt.separateValAddr = true 
 opt.noInput = true
 opt.noProb = true 
-opt.simplified = false 
+opt.simplified = true 
 opt.supervised = true 
 
 if not opt.noProb then
@@ -135,14 +135,14 @@ if not opt.noProb then
 else
    opt.maxForwardSteps = dataset.repetitions
 end
-opt.epochs = 5 
+opt.epochs = 100 
 
 --------------------------------------------------------------------------------
 
---local model = Model.create(opt, ShiftLearn.createWrapper,
-   --ShiftLearn.createWrapper, nn.Identity, "modelName")
+local model = Model.create(opt, ShiftLearn.createWrapper,
+   ShiftLearn.createWrapper, nn.Identity, "modelName")
 
-local model = Model.create(opt)
+--local model = Model.create(opt)
 
 if opt.giveMeModel then
    return model
@@ -176,6 +176,7 @@ local avg_errs_mse = {}
 local avg_errs_discrete = {}
 
 for i=1,opt.epochs do
+   print("epoch "..tostring(i))
    model.itNum = i
    local epoch_errors = {}
    if not opt.noProb then
@@ -190,8 +191,6 @@ for i=1,opt.epochs do
    epochs_all_errors_mse[#epochs_all_errors_mse + 1] = unpack(epoch_errors_mse)
    epochs_all_errors_discrete[#epochs_all_errors_discrete + 1] =
       unpack(epoch_errors_discrete) 
-   --print(epochs_all_errors_mse)
-   --print(epochs_all_errors_discrete) 
    avg_mse = 0.0 
    avg_discrete = 0.0
 
@@ -219,9 +218,24 @@ for i=1,opt.epochs do
    epochs_all_accuracies_mse[#epochs_all_accuracies_mse + 1] = accuracy[1]
    epochs_all_accuracies_discrete[#epochs_all_accuracies_discrete + 1] =
       accuracy[2]
+      gnuplot.figure("discrete")
+      gnuplot.xlabel("Epoch no.")
+      gnuplot.ylabel("Error(%)")
+      gnuplot.plot({'Train error',torch.Tensor(avg_errs_discrete)},
+      {'Eval error', torch.Tensor(epochs_all_accuracies_discrete)})
 
-   --print(avg_discrete)
+
+      --gnuplot.pngfigure("data_dumps/errors_all_avg_mse_" .. modelString .. ".png")
+      gnuplot.figure("mse")
+      gnuplot.xlabel("Epoch no.")
+      gnuplot.ylabel("Error")
+      gnuplot.plot({'Train error', torch.Tensor(avg_errs_mse)},
+      {'Eval error', torch.Tensor(epochs_all_accuracies_mse)})
+      gnuplot.plotflush()
+
+
 end
+
 local modelString = ""
 
 if dataset.taskName == "repeat_k" then
@@ -229,6 +243,29 @@ if dataset.taskName == "repeat_k" then
 elseif dataset.taskName == "binary_addition" then
    modelString =  model.modelName .. "A" .. tostring(dataset.maxVal)
 end
+
+file_avg_discrete = io.open("data_dumps/errors_all_avg_discrete_" .. modelString .. ".txt", "w");
+io.output(file_avg_discrete)
+io.write(tostring(torch.Tensor(avg_errs_discrete)))
+io.write("\n")
+io.write("-------------\n")
+io.write(tostring(torch.Tensor(epochs_all_accuracies_discrete)))
+io.write("\n")
+io.close(file_avg_discrete)
+
+
+file_avg_mse = io.open("data_dumps/errors_all_avg_mse_" .. modelString .. ".txt", "w");
+io.output(file_avg_mse)
+io.write(tostring(torch.Tensor(avg_errs_mse)))
+io.write("\n")
+io.write("-------------\n")
+io.write(tostring(torch.Tensor(epochs_all_accuracies_mse)))
+io.write("\n")
+io.close(file_avg_mse)
+
+
+io.output(io.stdout)
+
 
 print(avg_errs_mse)
 print(avg_errs_discrete)

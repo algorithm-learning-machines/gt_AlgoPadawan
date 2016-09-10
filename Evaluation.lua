@@ -5,6 +5,7 @@
 -- Needed for criterion
 require "Train"
 require "gnuplot"
+require "image"
 
 --------------------------------------------------------------------------------
 -- Evaluate a model trained on a certain dataset
@@ -71,6 +72,7 @@ function evalModelOnDataset(model, dataset, criterion, opt)
       errAvg_discrete = errAvg_discrete + err_discrete 
 
    end
+
    ----------------------------------------------------------------------------
    -- Average error
     ----------------------------------------------------------------------------
@@ -78,6 +80,7 @@ function evalModelOnDataset(model, dataset, criterion, opt)
     errAvg_discrete = errAvg_discrete / data:size(1)
     print("Error in evaluation "..errAvg)
     return {errAvg, errAvg_discrete}
+
 end
 
 
@@ -93,6 +96,7 @@ function getDiffs(outputMem, targetMem, begin_ix, end_ix)
          end
          if targetMem[i][j] ~= val then
             diff = diff + 1
+            print(targetMem[i][j] - val)
          end
       end
    end
@@ -145,6 +149,41 @@ function evalModelSupervised(model, dataset, criterion, opt)
               memory = output[1]
            else 
               memory = output
+           end
+           if j == opt.maxForwardSteps and i == 1 then
+              
+              local winsInitial = {}
+              local mem_thresh = memory:clone()
+
+              for i=1, dataset.repetitions do
+                 for j=1, mem_thresh:size(2) do
+                    local val = mem_thresh[i][j]
+                    if val > 0.5 then
+                       mem_thresh[i][j] = 1
+                    else
+                       mem_thresh[i][j] = 0
+                    end
+                 end
+              end
+
+              im_output = image.display{
+                 image = mem_thresh,
+                 win = im_output,
+                 zoom=70,
+                 legend = "output_memory" 
+              }
+              im_input = image.display{
+                 image = data[i],
+                 win = im_input,
+                 zoom=70,
+                 legend = "input memory" 
+              }
+              im_target = image.display{
+                 image = labels[i][j],
+                 win = im_target,
+                 zoom=70,
+                 legend = "target" 
+              }
            end
         end
         grandErr = grandErr / opt.maxForwardSteps 

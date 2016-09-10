@@ -231,12 +231,12 @@ function Model.saveModel(model, fileName, overWrite)
    if fileName == nil then
       fileName = "autosave.model"
    end
-   if (path.exists(fileName) and overWrite == false) then
-      print("file "..fileName.." already exists, overWrite option not specified. aborting.")
-      return false
-   end
-   torch.save(fileName, model)
-   print("Saved model!")
+   --if (path.exists(fileName) and overWrite == false) then
+      --print("file "..fileName.." already exists, overWrite option not specified. aborting.")
+      --return false
+   --end
+   --torch.save(fileName, model)
+   --print("Saved model!")
    return true
 end
 
