@@ -61,10 +61,10 @@ function evalModelOnDataset(model, dataset, criterion, opt)
       end
       if opt.simplified or not opt.noProb then
          err_discrete = getDiffs(finalOutput[1], comp_memory, 1,
-         comp_index)
+         comp_index + 1)
       else
          err_discrete = getDiffs(finalOutput, comp_memory, 1,
-         comp_index)
+         comp_index + 1)
       end
 
       err = criterion:forward(finalOutput, comp_memory)
@@ -96,7 +96,7 @@ function getDiffs(outputMem, targetMem, begin_ix, end_ix)
          end
          if targetMem[i][j] ~= val then
             diff = diff + 1
-            print(targetMem[i][j] - val)
+            --print(targetMem[i][j] - val)
          end
       end
    end
@@ -136,10 +136,10 @@ function evalModelSupervised(model, dataset, criterion, opt)
            if j == opt.maxForwardSteps then
               if opt.simplified then
                  err_discrete = getDiffs(output[1], labels[i][j], 1,
-                 dataset.repetitions)
+                 dataset.repetitions + 1)
               else
                  err_discrete = getDiffs(output, labels[i][j], 1,
-                 dataset.repetitions)
+                 dataset.repetitions + 1)
               end
            end
 
@@ -155,13 +155,13 @@ function evalModelSupervised(model, dataset, criterion, opt)
               local winsInitial = {}
               local mem_thresh = memory:clone()
 
-              for i=1, dataset.repetitions do
+              for i=1, dataset.repetitions + 1 do
                  for j=1, mem_thresh:size(2) do
                     local val = mem_thresh[i][j]
                     if val > 0.5 then
                        mem_thresh[i][j] = 1
                     else
-                       mem_thresh[i][j] = 0
+                       mem_thresh[i][j] = -1
                     end
                  end
               end

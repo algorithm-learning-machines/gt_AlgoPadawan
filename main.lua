@@ -40,11 +40,11 @@ function runUnitTestSuite(testSuite)
    end
 end
 
-print("Running model tests...")
+--print("Running model tests...")
 --runUnitTestSuite(modelTests)
-print("Running data tests...")
+--print("Running data tests...")
 --runUnitTestSuite(dataTests)
-print("Running training tests...")
+--print("Running training tests...")
 --runUnitTestSuite(trainingTests)
 
 --------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ cmd:option('-noProb', true, 'Architecture does not emit term. prob.')
 cmd:option('-memOnly', true, 'model that uses only memory, no sep input')
 cmd:option('supervised' ,true, 'Are we using supervised training')
 cmd:option('-eval_episodes', 10, 'Number of evaluation episodes')
-cmd:option('-modelName', 'ShiftKDemo', 'name of model to be used for data dumps')
+cmd:option('-modelName', 'Demo', 'name of model to be used for data dumps')
 --------------------------------------------------------------------------------
 -- Plotting options
 --------------------------------------------------------------------------------

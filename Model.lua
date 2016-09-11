@@ -118,7 +118,7 @@ function Model.create(opt, addressReader, addressWriter, valueWriter, modelName)
 
    linkedNode = inputAddr
    if addressWriter then
-      print("patratel\n\n")
+      --print("patratel\n\n")
       AW = addressWriter
       params = {memSize}
    end

@@ -59,7 +59,6 @@ function ShiftLearn.createDummy(vecSize, shiftNo)
    else
       J = I
    end
-   print(J)
    local learner2D = nn.Constant(J)(sh)
 
    -----------------------------------------------------------------------------
@@ -80,7 +79,7 @@ end
 
 function ShiftLearn.createWrapper(vecSize, shiftNo)
    -- shift address input
-   print(shiftNo)
+   --print(shiftNo)
    -----------------------------------------------------------------------------
    -- Internal shift generator
    -----------------------------------------------------------------------------

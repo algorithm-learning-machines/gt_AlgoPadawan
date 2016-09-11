@@ -5,8 +5,7 @@
 require 'gnuplot'
 require 'image'
 
-locales = {'en_US.UTF-8'}
-os.setlocale(locales[1])
+locales = {'en_US.UTF-8'} os.setlocale(locales[1])
 
 
 --------------------------------------------------------------------------------
@@ -311,10 +310,10 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
                if j == #clones - 1 then
                   if opt.simplified or not opt.noProb then
                      --print(currentOutput[1])
-                     err_discrete = getDiffsTrain(currentOutput[1], t, 1, comp_index)
+                     err_discrete = getDiffsTrain(currentOutput[1], t, 1, comp_index + 1)
                      --print('single_err ' .. err_discrete)
                   else
-                     err_discrete = getDiffsTrain(currentOutput, t, 1, comp_index)
+                     err_discrete = getDiffsTrain(currentOutput, t, 1, comp_index + 1)
                   end
                end
 
@@ -380,13 +379,13 @@ function trainModel(model, criterion, dataset, opt, optimMethod)
          optimMethod(feval, parameters, optimState)
       end
       if opt.saveEvery ~= nil and learnIterations % opt.saveEvery == 0 then
-         print(string.format("%d / %d", learnIterations, opt.saveEvery))
+         --print(string.format("%d / %d", learnIterations, opt.saveEvery))
          local ret = Model.saveModel(opt.saveFile)
          if ret ~= true then
-            print("Model saving could not be finalized")
+            --print("Model saving could not be finalized")
             error({code=121})
          else
-            print("Model has been saved to "..opt.saveFile)
+            --print("Model has been saved to "..opt.saveFile)
          end
       end
 
